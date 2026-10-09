@@ -39,10 +39,9 @@
       font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    header .logo {
-      width: 26px; height: 26px; border-radius: 8px; background: var(--accent);
-      display: grid; place-items: center; color: var(--accent-text); font-weight: 700;
-    }
+    header .logo { width: 26px; height: 26px; flex: none; color: var(--accent-text); }
+    header .logo rect { fill: var(--accent); }
+    header .logo .ring { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
     header h1 { font-size: 14px; margin: 0; font-weight: 600; }
     .card {
       background: var(--surface); border: 1px solid var(--border);
@@ -122,7 +121,12 @@
 </head>
 <body>
   <header>
-    <div class="logo">D</div>
+    <svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+      <rect width="24" height="24" rx="7"/>
+      <circle class="ring" cx="12" cy="12" r="6.5" stroke-width="2.2" opacity=".35"/>
+      <path class="ring" d="M12 5.5A6.5 6.5 0 1 1 5.5 12" stroke-width="2.2"/>
+      <path class="ring" d="M12 8.6V12h2.4" stroke-width="1.6"/>
+    </svg>
     <h1>DeskTime Remaining</h1>
   </header>
 

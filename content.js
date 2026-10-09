@@ -244,10 +244,15 @@
     return `${total ? Math.round((value / total) * 100) : 100}%`;
   }
 
+  // Label/value stat line; note is muted detail after the value, tone colors the value ('pos' | 'neg')
+  function row(label, value, note = '', tone = '') {
+    return ['row', label, value, note, tone];
+  }
+
   // Time at work that wasn't productive (breaks, neutral/unproductive apps)
   function pushNonProductive(lines, productive, atWork) {
     if (atWork !== null && atWork > productive) {
-      lines.push(['small', `Non-productive ${fmt(atWork - productive)} (${pct(productive, atWork)} productive)`]);
+      lines.push(row('Non-productive', fmt(atWork - productive), `${pct(productive, atWork)} productive`));
     }
   }
 
@@ -256,18 +261,17 @@
     return range.start.getDate() === 1 && sameDay(range.end, lastDay);
   }
 
-  function lateLine({ min, surplus }) {
+  function lateRow({ min, surplus }, suffix = '') {
+    const notes = [];
     if (min <= 0) {
-      const state = surplus >= 0 ? `${fmt(surplus)} ahead` : `${fmt(-surplus)} behind`;
-      return `No late arrival · ${state}, need over ${fmt(EARLY_LEAVE_WEEKLY_MIN)}`;
-    }
-    let text = `Can come late ${fmt(min)}`;
-    if (startOfDayMin !== null) {
+      notes.push(surplus >= 0 ? `${fmt(surplus)} ahead` : `${fmt(-surplus)} behind`, `need over ${fmt(EARLY_LEAVE_WEEKLY_MIN)}`);
+    } else if (startOfDayMin !== null) {
       const arrive = new Date();
       arrive.setHours(0, startOfDayMin + min, 0, 0);
-      text += ` · arrive by ${fmtClock(arrive)}`;
+      notes.push(`arrive by ${fmtClock(arrive)}`);
     }
-    return text;
+    if (suffix) notes.push(suffix);
+    return row('Late arrival', min > 0 ? fmt(min) : 'None', notes.join(' · '), min > 0 ? 'pos' : '');
   }
 
   function saveLateSnapshot(surplus) {
@@ -280,9 +284,9 @@
   // Day/week views lack month totals, so show allowance last computed on month view today
   function pushLateSnapshot(lines) {
     if (lateSnapshot?.day === toKey(new Date())) {
-      lines.push(['small', `${lateLine(lateSnapshot)} (as of ${fmtClock(new Date(lateSnapshot.at))})`]);
+      lines.push(lateRow(lateSnapshot, `as of ${fmtClock(new Date(lateSnapshot.at))}`));
     } else {
-      lines.push(['small', 'Late arrival: open month view to refresh']);
+      lines.push(row('Late arrival', '', 'open month view to refresh'));
     }
   }
 
@@ -293,16 +297,16 @@
     const lines = [];
     if (remaining > 0) {
       lines.push(['big', fmt(remaining)]);
-      if (sameDay(date, new Date())) {
-        lines.push(['small', `Finish at ${fmtClock(new Date(Date.now() + remaining * 60000))}`]);
-      }
     } else {
       lines.push(['big', `+${fmt(-remaining)}`]);
       lines.push(['small', 'Overtime']);
     }
-    lines.splice(1, 0, ['progress', dayTarget ? productive / dayTarget : 1],
-      ['small', `${pct(productive, dayTarget)} of target`]);
-    lines.push(['small', `Target ${fmt(dayTarget)}${half ? ' (half day)' : ''}`]);
+    lines.push(['progress', dayTarget ? productive / dayTarget : 1]);
+    lines.push(row('Done', fmt(productive), `${pct(productive, dayTarget)} of target`));
+    if (remaining > 0 && sameDay(date, new Date())) {
+      lines.push(row('Finish at', fmtClock(new Date(Date.now() + remaining * 60000))));
+    }
+    lines.push(row('Target', fmt(dayTarget), half ? 'half day' : ''));
     if (sameDay(date, new Date())) pushLateSnapshot(lines);
     pushNonProductive(lines, productive, atWork);
     return { title: 'Remaining today', lines };
@@ -330,19 +334,22 @@
       lines.push(['big', `+${fmt(-remaining)}`]);
       lines.push(['small', 'Overtime']);
     }
-    lines.splice(1, 0, ['progress', target ? productive / target : 1]);
-    // Per-day overrides make the "days × target" breakdown wrong, so drop it then
-    const uniform = target === totalDays * targetMin;
-    lines.push(['small', `Target ${fmt(target)} (${fmtDays(totalDays)}${uniform ? ` × ${fmt(targetMin)}` : ''})`]);
-
     // Working days and target minutes elapsed so far, today included
     const elapsed = totalDays - daysLeft + todayWeight;
     const required = target - left.min + todayWeight * targetFor(today);
 
+    // Pace marker: share of the target due by end of today
+    const pace = inRange && target ? { at: required / target, title: `Pace: ${fmt(required)} due by end of today` } : null;
+    lines.push(['progress', target ? productive / target : 1, pace]);
+    // Per-day overrides make the "days × target" breakdown wrong, so drop it then
+    const uniform = target === totalDays * targetMin;
+    lines.push(row('Target', fmt(target), `${fmtDays(totalDays)}${uniform ? ` × ${fmt(targetMin)}` : ''}`));
+
     // Required vs completed through today, with +/- balance
     if (inRange) {
       const diff = productive - required;
-      lines.push(['small', `To date: ${fmt(productive)} of ${fmt(required)} (${fmtDays(elapsed)}) · ${diff >= 0 ? '+' : '-'}${fmt(Math.abs(diff))}`]);
+      lines.push(row('To date', fmt(productive), `of ${fmt(required)} · ${fmtDays(elapsed)}`));
+      lines.push(row('Balance', `${diff >= 0 ? '+' : '-'}${fmt(Math.abs(diff))}`, diff >= 0 ? 'ahead' : 'behind', diff >= 0 ? 'pos' : 'neg'));
     }
 
     // Projection: assume continuous productive work from now until END_OF_DAY today
@@ -353,11 +360,10 @@
     if (todayWeight > 0 && now < eod) {
       const projRemaining = remaining - (eod - now) / 60000;
       const projDays = daysLeft - todayWeight;
-      let text = `At ${fmtClock(eod)}: `;
-      if (projRemaining <= 0) text += `+${fmt(-projRemaining)} overtime`;
-      else if (projDays > 0) text += `${fmt(projRemaining)} left, ${fmt(projRemaining / projDays)}/day for ${fmtDays(projDays)}`;
-      else text += `${fmt(projRemaining)} left, no working days left`;
-      lines.push(['small', text]);
+      const label = `At ${fmtClock(eod)}`;
+      if (projRemaining <= 0) lines.push(row(label, `+${fmt(-projRemaining)}`, 'overtime', 'pos'));
+      else if (projDays > 0) lines.push(row(label, `${fmt(projRemaining)} left`, `${fmt(projRemaining / projDays)}/day for ${fmtDays(projDays)}`));
+      else lines.push(row(label, `${fmt(projRemaining)} left`, 'no working days left', 'neg'));
     }
 
     // Late arrival: month surplus projected to end of today, minus weekly early-leave reserve
@@ -365,7 +371,7 @@
       if (isFullMonth(range)) {
         const projected = productive + (todayWeight > 0 && now < eod ? (eod - now) / 60000 : 0);
         saveLateSnapshot(Math.round(projected - required));
-        lines.push(['small', lateLine(lateSnapshot)]);
+        lines.push(lateRow(lateSnapshot));
       } else {
         pushLateSnapshot(lines);
       }
@@ -387,14 +393,25 @@
 
   const STYLES = `
     .dtr { --dtr-accent:#16a34a; --dtr-over:#2563eb; --dtr-muted:#667085; --dtr-track:#e9edf2;
+      --dtr-ink:#1d2433; --dtr-neg:#dc2626;
       position:relative; z-index:1; padding:4px 24px 8px; font-family:inherit; }
     .dtr-big { font-size:30px; font-weight:700; line-height:1.2; letter-spacing:-.02em; color:var(--dtr-accent);
       font-variant-numeric:tabular-nums; }
     .dtr-big.over { color:var(--dtr-over); }
     .dtr-small { font-size:12.5px; color:var(--dtr-muted); line-height:1.5; }
-    .dtr-bar { height:6px; border-radius:999px; background:var(--dtr-track); overflow:hidden; margin:6px 0 8px; }
+    .dtr-bar { position:relative; height:6px; border-radius:999px; background:var(--dtr-track); margin:6px 0 8px; }
     .dtr-bar > div { height:100%; border-radius:inherit; background:var(--dtr-accent); transition:width .4s ease; }
     .dtr-bar.over > div { background:var(--dtr-over); }
+    .dtr-pace { position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; border-radius:1px;
+      background:var(--dtr-ink); transition:left .4s ease; }
+    .dtr-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:4px 0;
+      font-size:12.5px; line-height:1.4; border-top:1px solid var(--dtr-track); }
+    .dtr-bar + .dtr-row { border-top:0; }
+    .dtr-label { flex:none; color:var(--dtr-muted); }
+    .dtr-value { text-align:right; font-weight:600; color:var(--dtr-ink); font-variant-numeric:tabular-nums; }
+    .dtr-value.pos { color:var(--dtr-accent); }
+    .dtr-value.neg { color:var(--dtr-neg); }
+    .dtr-note { font-weight:400; color:var(--dtr-muted); }
     .dtr-menu { --m-bg:#fff; --m-border:#e4e7ec; --m-text:#1d2433; --m-muted:#667085; --m-hover:#f2f4f7; --m-accent:#16a34a;
       position:fixed; z-index:99999; min-width:170px; padding:6px; background:var(--m-bg); color:var(--m-text);
       border:1px solid var(--m-border); border-radius:10px; box-shadow:0 10px 30px rgba(16,24,40,.18);
@@ -405,7 +422,8 @@
     .dtr-menu-item:hover { background:var(--m-hover); }
     .dtr-menu-item .check { color:var(--m-accent); font-weight:700; }
     @keyframes dtr-pop { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:none; } }
-    html.dtr-dark .dtr { --dtr-accent:#6ee787; --dtr-over:#7cb7ff; --dtr-muted:#93a0a8; --dtr-track:#242d33; }
+    html.dtr-dark .dtr { --dtr-accent:#6ee787; --dtr-over:#7cb7ff; --dtr-muted:#93a0a8; --dtr-track:#242d33;
+      --dtr-ink:#e8ecee; --dtr-neg:#ff8a80; }
     html.dtr-dark .dtr-big { font-size:32px; font-weight:600; letter-spacing:-.025em; }
     html.dtr-dark .dtr-bar { height:4px; margin:10px 0; }
     html.dtr-dark .dtr-menu { --m-bg:#1b2228; --m-border:#242d33; --m-text:#e8ecee; --m-muted:#93a0a8; --m-hover:#ffffff12; --m-accent:#6ee787; }`;
@@ -439,10 +457,17 @@
       if (anchor && anchor.parentElement === card) anchor.after(box);
       else card.appendChild(box);
     }
-    const html = lines.map(([kind, value]) => {
+    const share = v => Math.round(Math.min(1, Math.max(0, v)) * 100);
+    const html = lines.map(([kind, value, ...rest]) => {
       if (kind === 'progress') {
-        const pct = Math.round(Math.min(1, Math.max(0, value)) * 100);
-        return `<div class="dtr-bar${value >= 1 ? ' over' : ''}"><div style="width:${pct}%"></div></div>`;
+        const [pace] = rest;
+        const tick = pace ? `<i class="dtr-pace" style="left:${share(pace.at)}%" title="${pace.title}"></i>` : '';
+        return `<div class="dtr-bar${value >= 1 ? ' over' : ''}"><div style="width:${share(value)}%"></div>${tick}</div>`;
+      }
+      if (kind === 'row') {
+        const [text, note, tone] = rest;
+        const parts = [text, note && `<span class="dtr-note">${note}</span>`].filter(Boolean).join(' ');
+        return `<div class="dtr-row"><span class="dtr-label">${value}</span><span class="dtr-value${tone ? ` ${tone}` : ''}">${parts}</span></div>`;
       }
       if (kind === 'big') return `<div class="dtr-big${value.startsWith('+') ? ' over' : ''}">${value}</div>`;
       return `<div class="dtr-small">${value}</div>`;

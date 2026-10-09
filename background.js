@@ -5,11 +5,19 @@ function drawIcon(size) {
   ctx.beginPath();
   ctx.roundRect(0, 0, size, size, size * 0.28);
   ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `700 ${Math.round(size * 0.68)}px system-ui, "Segoe UI", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('D', size / 2, size / 2 + size * 0.04);
+  // Progress ring matching tools/make-icons.ps1: faint track, three-quarter arc from 12 o'clock
+  const c = size / 2;
+  const r = size * 0.27;
+  ctx.lineWidth = size * 0.095;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#ffffff5a';
+  ctx.beginPath();
+  ctx.arc(c, c, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(c, c, r, -Math.PI / 2, Math.PI);
+  ctx.stroke();
   return ctx.getImageData(0, 0, size, size);
 }
 
