@@ -1,0 +1,9 @@
+# Packed extension output and its private signing key
+*.crx
+*.pem
+*.zip
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/

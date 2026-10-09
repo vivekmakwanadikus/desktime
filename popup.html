@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --border: #e4e7ec;
+      --text: #1d2433;
+      --muted: #667085;
+      --accent: #16a34a;
+      --accent-soft: #dcfce7;
+      --accent-text: #ffffff;
+      --danger: #dc2626;
+      --half: #d97706;
+      --half-soft: #fef3c7;
+      --radius: 10px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --surface: #181b21;
+        --border: #2a2f38;
+        --text: #e6e8ec;
+        --muted: #9aa3b2;
+        --accent: #22c55e;
+        --accent-soft: #14301f;
+        --accent-text: #06120a;
+        --danger: #f87171;
+        --half: #fbbf24;
+        --half-soft: #3a2c0c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; width: 300px; padding: 14px;
+      background: var(--bg); color: var(--text);
+      font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    header .logo {
+      width: 26px; height: 26px; border-radius: 8px; background: var(--accent);
+      display: grid; place-items: center; color: var(--accent-text); font-weight: 700;
+    }
+    header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px; margin-bottom: 10px;
+    }
+    .card h2 {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--muted); margin: 0 0 10px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    label.field { display: block; font-size: 12px; color: var(--muted); }
+    label.field span { display: block; margin-bottom: 4px; }
+    input, select {
+      width: 100%; padding: 7px 9px; font: inherit; color: var(--text);
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    input[type="date"] { color-scheme: light dark; }
+
+    .days { display: flex; gap: 4px; margin-top: 10px; }
+    .days label {
+      flex: 1; text-align: center; padding: 6px 0; border-radius: 8px; cursor: pointer;
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      background: var(--bg); border: 1px solid var(--border); user-select: none;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .days input { position: absolute; opacity: 0; pointer-events: none; }
+    .days label:has(input:checked) { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    .days label:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    button {
+      font: inherit; font-weight: 600; cursor: pointer; border-radius: 8px; border: 0;
+      padding: 8px 12px; background: var(--accent); color: var(--accent-text);
+      transition: filter .15s, transform .05s;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: translateY(1px); }
+    .actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    #status { font-size: 12px; min-height: 16px; flex: 1; }
+    #status.ok { color: var(--accent); }
+    #status.err { color: var(--danger); }
+
+    .add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+    .add > * { min-width: 0; }
+    .add input[type="date"] { grid-column: 1 / -1; }
+
+    ul { list-style: none; padding: 0; margin: 10px 0 0; max-height: 170px; overflow-y: auto; }
+    li {
+      display: flex; align-items: center; gap: 8px; padding: 6px 4px;
+      border-top: 1px solid var(--border);
+    }
+    li:first-child { border-top: 0; }
+    li .date { flex: 1; font-variant-numeric: tabular-nums; }
+    .tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+    .tag.holidays { background: var(--accent-soft); color: var(--accent); }
+    .tag.halfDays { background: var(--half-soft); color: var(--half); }
+    li button {
+      background: transparent; color: var(--muted); padding: 2px 6px; font-size: 15px; line-height: 1;
+    }
+    li button:hover { color: var(--danger); filter: none; }
+    .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 0 2px; }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+    .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .toggle input { width: auto; accent-color: var(--accent); }
+    .overrides { display: flex; gap: 4px; margin-top: 4px; }
+    .overrides input { flex: 1; min-width: 0; padding: 5px 0; text-align: center; font-size: 11px; }
+    button.link {
+      background: transparent; color: var(--muted); padding: 0; margin-top: 8px;
+      font-size: 11px; font-weight: 500; text-decoration: underline;
+    }
+    button.link:hover { color: var(--danger); filter: none; }
+    .backup { display: flex; gap: 8px; }
+    .backup button { flex: 1; }
+    #backupStatus.err { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">D</div>
+    <h1>DeskTime Remaining</h1>
+  </header>
+
+  <section class="card">
+    <h2>Schedule</h2>
+    <div class="row">
+      <label class="field"><span>Daily target</span><input id="target" placeholder="8:30"></label>
+      <label class="field"><span>End of day (24h)</span><input id="eod" placeholder="18:30"></label>
+      <label class="field"><span>Start of day (24h)</span><input id="sod" placeholder="optional"></label>
+    </div>
+    <div id="workdays" class="days" aria-label="Working days"></div>
+    <div id="overrides" class="overrides" aria-label="Per-day targets"></div>
+    <div class="hint">Per-day target, e.g. 6:00. Blank uses the daily target.</div>
+    <div class="actions">
+      <div id="status"></div>
+      <button id="save">Save</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Appearance</h2>
+    <label class="toggle"><input id="dark" type="checkbox">Dark theme on DeskTime</label>
+  </section>
+
+  <section class="card">
+    <h2>Days off</h2>
+    <div class="add">
+      <input id="holiday" type="date" aria-label="Date">
+      <select id="kind" aria-label="Type">
+        <option value="holidays">Holiday</option>
+        <option value="halfDays">Half day</option>
+      </select>
+      <button id="add">Add</button>
+    </div>
+    <ul id="list"></ul>
+    <button id="prune" class="link" hidden></button>
+    <div class="hint">Tip: right-click a day in the DeskTime calendar to mark it.</div>
+  </section>
+
+  <section class="card">
+    <h2>Backup</h2>
+    <div class="backup">
+      <button id="export">Export</button>
+      <button id="import">Import</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <div id="backupStatus" class="hint"></div>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>
