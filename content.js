@@ -345,17 +345,22 @@
     const uniform = target === totalDays * targetMin;
     lines.push(row('Target', fmt(target), `${fmtDays(totalDays)}${uniform ? ` × ${fmt(targetMin)}` : ''}`));
 
-    // Required vs completed through today, with +/- balance
-    if (inRange) {
-      const diff = productive - required;
-      lines.push(row('To date', fmt(productive), `of ${fmt(required)} · ${fmtDays(elapsed)}`));
-      lines.push(row('Balance', `${diff >= 0 ? '+' : '-'}${fmt(Math.abs(diff))}`, diff >= 0 ? 'ahead' : 'behind', diff >= 0 ? 'pos' : 'neg'));
-    }
-
     // Projection: assume continuous productive work from now until END_OF_DAY today
     const now = new Date();
     const eod = new Date(now);
     eod.setHours(Math.floor(endOfDayMin / 60), endOfDayMin % 60, 0, 0);
+
+    // Required vs completed through today, with +/- balance (and its projection at END_OF_DAY)
+    if (inRange) {
+      const diff = productive - required;
+      const notes = [diff >= 0 ? 'ahead' : 'behind'];
+      if (todayWeight > 0 && now < eod) {
+        const projDiff = Math.round(diff + (eod - now) / 60000);
+        notes.push(`${projDiff >= 0 ? '+' : '-'}${fmt(Math.abs(projDiff))} ${projDiff >= 0 ? 'ahead' : 'behind'} at ${fmtClock(eod)}`);
+      }
+      lines.push(row('To date', fmt(productive), `of ${fmt(required)} · ${fmtDays(elapsed)}`));
+      lines.push(row('Balance', `${diff >= 0 ? '+' : '-'}${fmt(Math.abs(diff))}`, notes.join(' · '), diff >= 0 ? 'pos' : 'neg'));
+    }
 
     if (todayWeight > 0 && now < eod) {
       const projRemaining = remaining - (eod - now) / 60000;
