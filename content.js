@@ -309,7 +309,7 @@
     lines.push(row('Target', fmt(dayTarget), half ? 'half day' : ''));
     if (sameDay(date, new Date())) pushLateSnapshot(lines);
     pushNonProductive(lines, productive, atWork);
-    return { title: 'Remaining today', lines };
+    return { title: 'Left today', lines };
   }
 
   function buildPeriod(productive, range) {
