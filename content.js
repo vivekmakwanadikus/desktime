@@ -271,7 +271,7 @@
       notes.push(`arrive by ${fmtClock(arrive)}`);
     }
     if (suffix) notes.push(suffix);
-    return row('Late arrival', min > 0 ? fmt(min) : 'None', notes.join(' · '), min > 0 ? 'pos' : '');
+    return row('Late arrival', min > 0 ? fmt(min) : 'None', notes.join(', '), min > 0 ? 'pos' : '');
   }
 
   function saveLateSnapshot(surplus) {
@@ -358,8 +358,8 @@
         const projDiff = Math.round(diff + (eod - now) / 60000);
         notes.push(`${projDiff >= 0 ? '+' : '-'}${fmt(Math.abs(projDiff))} ${projDiff >= 0 ? 'ahead' : 'behind'} at ${fmtClock(eod)}`);
       }
-      lines.push(row('To date', fmt(productive), `of ${fmt(required)} · ${fmtDays(elapsed)}`));
-      lines.push(row('Balance', `${diff >= 0 ? '+' : '-'}${fmt(Math.abs(diff))}`, notes.join(' · '), diff >= 0 ? 'pos' : 'neg'));
+      lines.push(row('To date', fmt(productive), `of ${fmt(required)}, ${fmtDays(elapsed)}`));
+      lines.push(row('Balance', `${diff >= 0 ? '+' : '-'}${fmt(Math.abs(diff))}`, notes.join(', '), diff >= 0 ? 'pos' : 'neg'));
     }
 
     if (todayWeight > 0 && now < eod) {
@@ -396,42 +396,52 @@
     return card;
   }
 
+  // Palette and faces live in the two token blocks (.dtr, .dtr-menu) and their dark twins; rules below use only var().
+  // Values are it_admin's Cobalt tokens (it_admin/assets/it_admin.css); the page keeps its own body face
   const STYLES = `
-    .dtr { --dtr-accent:#16a34a; --dtr-over:#2563eb; --dtr-muted:#667085; --dtr-track:#e9edf2;
-      --dtr-ink:#1d2433; --dtr-neg:#dc2626;
+    .dtr { --dtr-font-display:"Familjen Grotesk",system-ui,sans-serif;
+      --dtr-primary:oklch(52% 0.19 258); --dtr-ok:oklch(55% 0.12 165); --dtr-ok-text:oklch(45% 0.1 165);
+      --dtr-muted:oklch(50% 0.018 258); --dtr-track:oklch(93.6% 0.011 252); --dtr-line:oklch(94% 0.008 252);
+      --dtr-ink:oklch(21% 0.028 262); --dtr-neg:oklch(53% 0.19 25);
       position:relative; z-index:1; padding:4px 24px 8px; font-family:inherit; }
-    .dtr-big { font-size:30px; font-weight:700; line-height:1.2; letter-spacing:-.02em; color:var(--dtr-accent);
-      font-variant-numeric:tabular-nums; }
-    .dtr-big.over { color:var(--dtr-over); }
-    .dtr-small { font-size:12.5px; color:var(--dtr-muted); line-height:1.5; }
-    .dtr-bar { position:relative; height:6px; border-radius:999px; background:var(--dtr-track); margin:6px 0 8px; }
-    .dtr-bar > div { height:100%; border-radius:inherit; background:var(--dtr-accent); transition:width .4s ease; }
-    .dtr-bar.over > div { background:var(--dtr-over); }
+    .dtr-big { font-family:var(--dtr-font-display); font-size:36px; font-weight:600; line-height:1.1; letter-spacing:-.03em;
+      color:var(--dtr-ink); font-variant-numeric:tabular-nums; }
+    .dtr-big.over { color:var(--dtr-ok-text); }
+    .dtr-small { font-size:13px; color:var(--dtr-muted); line-height:1.5; }
+    .dtr-bar { position:relative; height:6px; border-radius:999px; background:var(--dtr-track); margin:12px 0; }
+    .dtr-bar > div { height:100%; border-radius:inherit; background:var(--dtr-primary); transform-origin:left center; }
+    .dtr-bar.over > div { background:var(--dtr-ok); }
     .dtr-pace { position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; border-radius:1px;
-      background:var(--dtr-ink); transition:left .4s ease; }
+      background:var(--dtr-ink); }
     .dtr-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:4px 0;
-      font-size:12.5px; line-height:1.4; border-top:1px solid var(--dtr-track); }
+      font-size:13px; line-height:1.4; border-top:1px solid var(--dtr-line); }
     .dtr-bar + .dtr-row { border-top:0; }
     .dtr-label { flex:none; color:var(--dtr-muted); }
     .dtr-value { text-align:right; font-weight:600; color:var(--dtr-ink); font-variant-numeric:tabular-nums; }
-    .dtr-value.pos { color:var(--dtr-accent); }
+    .dtr-value.pos { color:var(--dtr-ok-text); }
     .dtr-value.neg { color:var(--dtr-neg); }
     .dtr-note { font-weight:400; color:var(--dtr-muted); }
-    .dtr-menu { --m-bg:#fff; --m-border:#e4e7ec; --m-text:#1d2433; --m-muted:#667085; --m-hover:#f2f4f7; --m-accent:#16a34a;
-      position:fixed; z-index:99999; min-width:170px; padding:6px; background:var(--m-bg); color:var(--m-text);
-      border:1px solid var(--m-border); border-radius:10px; box-shadow:0 10px 30px rgba(16,24,40,.18);
-      font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif; animation:dtr-pop .12s ease-out; }
-    .dtr-menu-head { padding:4px 10px 6px; font-size:11px; font-weight:600; letter-spacing:.04em;
-      text-transform:uppercase; color:var(--m-muted); }
-    .dtr-menu-item { display:flex; justify-content:space-between; gap:12px; padding:7px 10px; border-radius:6px; cursor:pointer; }
-    .dtr-menu-item:hover { background:var(--m-hover); }
+    .dtr-menu { --m-bg:oklch(99.4% 0.003 250); --m-border:oklch(90% 0.009 252); --m-text:oklch(21% 0.028 262);
+      --m-muted:oklch(50% 0.018 258); --m-hover:oklch(97.2% 0.01 254); --m-accent:oklch(52% 0.19 258);
+      --m-focus:oklch(52% 0.19 258); --m-shadow:0 8px 24px oklch(21% 0.028 262 / .16);
+      --m-font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+      position:fixed; z-index:99999; min-width:176px; padding:4px; background:var(--m-bg); color:var(--m-text);
+      border:1px solid var(--m-border); border-radius:8px; box-shadow:var(--m-shadow);
+      font:13px/1.4 var(--m-font); animation:dtr-pop .12s ease-out; }
+    .dtr-menu-head { padding:4px 12px 8px; font-size:12px; color:var(--m-muted); }
+    .dtr-menu-item { display:flex; justify-content:space-between; width:100%; gap:12px; padding:8px 12px; font:inherit;
+      color:inherit; text-align:left; background:none; border:0; border-radius:6px; cursor:pointer; }
+    .dtr-menu-item:hover, .dtr-menu-item:active { background:var(--m-hover); }
+    .dtr-menu-item:focus-visible { outline:2px solid var(--m-focus); outline-offset:-2px; }
     .dtr-menu-item .check { color:var(--m-accent); font-weight:700; }
     @keyframes dtr-pop { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:none; } }
-    html.dtr-dark .dtr { --dtr-accent:#6ee787; --dtr-over:#7cb7ff; --dtr-muted:#93a0a8; --dtr-track:#242d33;
-      --dtr-ink:#e8ecee; --dtr-neg:#ff8a80; }
-    html.dtr-dark .dtr-big { font-size:32px; font-weight:600; letter-spacing:-.025em; }
-    html.dtr-dark .dtr-bar { height:4px; margin:10px 0; }
-    html.dtr-dark .dtr-menu { --m-bg:#1b2228; --m-border:#242d33; --m-text:#e8ecee; --m-muted:#93a0a8; --m-hover:#ffffff12; --m-accent:#6ee787; }`;
+    @media (prefers-reduced-motion:reduce) { .dtr-menu { animation:none; } }
+    html.dtr-dark .dtr { --dtr-primary:oklch(70% 0.14 255); --dtr-ok:oklch(72% 0.12 165); --dtr-ok-text:oklch(80% 0.11 165);
+      --dtr-muted:oklch(69% 0.022 256); --dtr-track:oklch(26.5% 0.026 262); --dtr-line:oklch(25.5% 0.024 262);
+      --dtr-ink:oklch(93% 0.01 250); --dtr-neg:oklch(70% 0.16 25); }
+    html.dtr-dark .dtr-menu { --m-bg:oklch(26.5% 0.026 262); --m-border:oklch(35% 0.026 262); --m-text:oklch(93% 0.01 250);
+      --m-muted:oklch(69% 0.022 256); --m-hover:oklch(31% 0.028 262); --m-accent:oklch(70% 0.14 255);
+      --m-focus:oklch(70% 0.14 255); --m-shadow:0 8px 24px oklch(0% 0 0 / .5); }`;
 
   function injectStyles() {
     if (document.getElementById('dtr-styles')) return;
@@ -467,7 +477,7 @@
       if (kind === 'progress') {
         const [pace] = rest;
         const tick = pace ? `<i class="dtr-pace" style="left:${share(pace.at)}%" title="${pace.title}"></i>` : '';
-        return `<div class="dtr-bar${value >= 1 ? ' over' : ''}"><div style="width:${share(value)}%"></div>${tick}</div>`;
+        return `<div class="dtr-bar${value >= 1 ? ' over' : ''}"><div style="transform:scaleX(${share(value) / 100})"></div>${tick}</div>`;
       }
       if (kind === 'row') {
         const [text, note, tone] = rest;
@@ -517,6 +527,7 @@
     injectStyles();
     menu = document.createElement('div');
     menu.className = 'dtr-menu';
+    menu.setAttribute('role', 'menu');
     menu.style.left = `${e.clientX}px`;
     menu.style.top = `${e.clientY}px`;
     const header = document.createElement('div');
@@ -525,7 +536,9 @@
     header.textContent = new Date(y, mo - 1, d).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
     menu.appendChild(header);
     for (const [kind, label] of [['holidays', 'Holiday'], ['halfDays', 'Half day'], [null, 'Clear']]) {
-      const item = document.createElement('div');
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.setAttribute('role', 'menuitem');
       item.className = 'dtr-menu-item';
       item.textContent = label;
       if (current === kind) {
@@ -541,6 +554,7 @@
       menu.appendChild(item);
     }
     document.body.appendChild(menu);
+    menu.querySelector('.dtr-menu-item').focus();
   });
   document.addEventListener('click', e => { if (menu && !menu.contains(e.target)) closeMenu(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });

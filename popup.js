@@ -1,6 +1,27 @@
 const input = document.getElementById('target');
 const status = document.getElementById('status');
 
+// One panel at a time; arrow keys move between tabs
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+function selectTab(tab, focus) {
+  for (const t of tabs) {
+    const on = t === tab;
+    t.setAttribute('aria-selected', on);
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  }
+  if (focus) tab.focus();
+}
+tabs.forEach((tab, i) => {
+  tab.addEventListener('click', () => selectTab(tab));
+  tab.addEventListener('keydown', (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    selectTab(tabs[(i + step + tabs.length) % tabs.length], true);
+  });
+});
+
 const holidayInput = document.getElementById('holiday');
 const list = document.getElementById('list');
 const kindSelect = document.getElementById('kind');
@@ -77,8 +98,10 @@ function renderList() {
     tag.className = `tag ${kind}`;
     tag.textContent = LABELS[kind];
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.textContent = '×';
     btn.title = 'Remove';
+    btn.setAttribute('aria-label', `Remove ${label.textContent}`);
     btn.addEventListener('click', () => saveDays(kind, days[kind].filter(d => d !== date)));
     li.append(label, tag, btn);
     list.appendChild(li);

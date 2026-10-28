@@ -1,19 +1,21 @@
 (() => {
-  const BG = '#0d1114';
-  const SURFACE = '#141a1e';
-  const RAISED = '#1b2228';
-  const BORDER = '#242d33';
-  const TEXT = '#e8ecee';
-  const MUTED = '#93a0a8';
-  const ACCENT = '#6ee787';
-  const FONT = '"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif';
+  // Graphite palette from it_admin's dark theme (it_admin/assets/it_admin.css, :root[data-theme="dark"])
+  const BG = 'oklch(17.5% 0.02 262)';
+  const SIDE = 'oklch(19.5% 0.022 262)';
+  const SURFACE = 'oklch(21% 0.024 262)';
+  const RAISED = 'oklch(26.5% 0.026 262)';
+  const BORDER = 'oklch(30% 0.024 262)';
+  const TEXT = 'oklch(93% 0.01 250)';
+  const MUTED = 'oklch(69% 0.022 256)';
+  const ACCENT = 'oklch(70% 0.14 255)';
+  const OK_TEXT = 'oklch(80% 0.11 165)';
 
   // DeskTime themes through --dt-* palette variables; inverting the gray scale recolors most of the app
   const BASE = `
     html.dtr-dark { color-scheme:dark;
-      --dt-gray50:${BG}; --dt-gray100:${RAISED}; --dt-gray150:${BORDER}; --dt-gray200:#303a41; --dt-gray250:#5b6370;
-      --dt-gray300:#6f7785; --dt-gray400:#8b93a1; --dt-gray500:#9aa3b2; --dt-gray550:#a5adba; --dt-gray600:#b4bac6;
-      --dt-gray700:#cdd2da; --dt-gray800:#e6e8ec; --dt-gray900:#f3f4f6;
+      --dt-gray50:${BG}; --dt-gray100:${RAISED}; --dt-gray150:${BORDER}; --dt-gray200:oklch(33% 0.026 262); --dt-gray250:oklch(44% 0.028 262);
+      --dt-gray300:oklch(52% 0.026 260); --dt-gray400:oklch(62% 0.024 258); --dt-gray500:${MUTED}; --dt-gray550:oklch(73% 0.02 256); --dt-gray600:oklch(78% 0.016 254);
+      --dt-gray700:oklch(84% 0.014 254); --dt-gray800:oklch(91% 0.01 250); --dt-gray900:oklch(95% 0.008 250);
       --dt-green100:#16281a; --dt-orange100:#33190f; --dt-red50:#2a1416; --dt-red100:#3a171a; --dt-yellow100:#33290c;
       --dt-azure100:#12263a; --dt-pink100:#2a1630; --dt-aqua100:#0f2a2c; --dt-yellow900:#fcd34d;
       --dt-background-primary:${SURFACE}; --dt-surface-background:${SURFACE};
@@ -24,41 +26,108 @@
       --dt-border-primary:#ffffff52; --dt-border-secondary:#ffffff2e; --dt-border-tertiary:#ffffff14;
       --dt-background-dynamic-lvl-1:#ffffff08; --dt-background-dynamic-lvl-2:#ffffff12;
       --dt-interactive-hover:#ffffff14; --dt-interactive-pressed:#ffffff24; }
-    html.dtr-dark body { background-color:${BG}; color:${TEXT}; }
-    html.dtr-dark .twitter-typeahead .form-control { background-color:${RAISED} !important; }
-    html.dtr-dark #ai-summary-trigger-button { background:#a78bfa1f !important; border:1px solid #a78bfa3d !important;
-      border-radius:8px !important; color:#c4b5fd !important; transition:background-color .15s, border-color .15s; }
-    html.dtr-dark #ai-summary-trigger-button:hover { background:#a78bfa33 !important; border-color:#a78bfa66 !important; }
-    html.dtr-dark #ai-summary-trigger-button span { background:none !important; color:inherit !important;
-      -webkit-text-fill-color:currentColor !important; font-size:14px; font-weight:500; }
-    html.dtr-dark #ai-summary-trigger-button i { color:inherit !important; }
-    html.dtr-dark .nvd3 text { fill:${MUTED}; }
-    html.dtr-dark .nvd3 .nv-axis line, html.dtr-dark .nvd3 .nv-axis path { stroke:${BORDER}; }`;
+    html.dtr-dark body { background-color:${BG}; color:${TEXT}; }`;
 
-  // Restyle on top of the dark palette: hairline cards, quiet titles, line sparklines
-  const MODERN = `
-    html.dtr-dark body, html.dtr-dark [class*="dt-typography"], html.dtr-dark .nvd3 text,
-    html.dtr-dark .btn, html.dtr-dark input { font-family:${FONT} !important; }
-    html.dtr-dark .dt-card { border-radius:14px; box-shadow:inset 0 0 0 1px ${BORDER} !important; }
-    html.dtr-dark .dt-card[data-dtr-card] { box-shadow:inset 0 0 0 1px ${ACCENT}4d !important; }
-    html.dtr-dark .dt-card--chart .dt-typography-h6 { font-size:13px; font-weight:500 !important;
-      letter-spacing:.01em; color:${MUTED} !important; }
-    html.dtr-dark .dt-card--chart .dt-typography-h3 { font-size:32px; font-weight:600; letter-spacing:-.025em;
-      font-variant-numeric:tabular-nums; }
-    html.dtr-dark .text-green400 { color:${ACCENT} !important; }
-    html.dtr-dark .dt-card--chart [class*="icon-circle-question"] { opacity:.3; transition:opacity .15s; }
-    html.dtr-dark .dt-card--chart:hover [class*="icon-circle-question"] { opacity:.8; }
-    html.dtr-dark .dt-card--chart .card-footer { background-color:transparent; border-radius:0 0 14px 14px;
+  // The it_admin (Cobalt) skin, always on: cool paper and cobalt in light, graphite in dark. Values are it_admin's
+  // (it_admin/assets/it_admin.css). Tokens first, rules below use only var(); fonts fall back to system faces
+  // because DeskTime pages load no web fonts of ours. The sidebar stays graphite in both themes (the logo is a white asset).
+  const SKIN = `
+    html.dtr-skin { color-scheme:light;
+      --sk-font-display:"Familjen Grotesk","IBM Plex Sans","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+      --sk-font:"IBM Plex Sans","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+      --sk-bg:oklch(96.2% 0.008 252); --sk-surface:oklch(99.2% 0.004 250); --sk-surface-2:oklch(97.4% 0.006 252);
+      --sk-raised:oklch(99.4% 0.003 250); --sk-field:oklch(99.4% 0.003 250);
+      --sk-border:oklch(90% 0.009 252); --sk-hover:oklch(97.2% 0.01 254); --sk-track:oklch(93.6% 0.011 252);
+      --sk-text:oklch(21% 0.028 262); --sk-text-2:oklch(36% 0.022 260); --sk-muted:oklch(50% 0.018 258);
+      --sk-primary:oklch(52% 0.19 258); --sk-primary-hover:oklch(47% 0.2 260); --sk-primary-soft:oklch(95% 0.028 256);
+      --sk-primary-deep:oklch(39% 0.16 260); --sk-on-primary:oklch(98.6% 0.005 250);
+      --sk-edge:oklch(62% 0.018 258); --sk-btn-edge:oklch(80% 0.016 254); --sk-btn-edge-hover:oklch(72% 0.02 254);
+      --sk-ok-text:oklch(45% 0.1 165); --sk-danger:oklch(53% 0.19 25);
+      --sk-shadow-card:0 1px 2px oklch(21% 0.028 262 / .06); --sk-shadow-tab:0 1px 2px oklch(21% 0.028 262 / .1);
+      --sk-shadow-key:0 2px 0 0 var(--sk-btn-edge), 0 4px 6px -4px oklch(21% 0.028 262 / .24), inset 0 1px 0 oklch(100% 0 0 / .9);
+      --sk-shadow-key-accent:0 2px 0 0 var(--sk-primary-deep), 0 4px 6px -4px oklch(30% 0.12 260 / .4), inset 0 1px 0 oklch(100% 0 0 / .2);
+      --sk-shadow-press:inset 0 1px 2px oklch(21% 0.028 262 / .16);
+      --sk-ease:cubic-bezier(.2, .7, .2, 1);
+      --sk-side:oklch(21% 0.024 262); --sk-side-text:oklch(80% 0.016 254); --sk-side-strong:oklch(95% 0.008 250);
+      --sk-side-hover:oklch(26.5% 0.026 262); --sk-side-active:oklch(26.5% 0.026 262); --sk-side-accent:oklch(70% 0.14 255); }
+    html.dtr-dark { color-scheme:dark;
+      --sk-bg:${BG}; --sk-surface:${SURFACE}; --sk-surface-2:${SIDE}; --sk-raised:${RAISED}; --sk-field:oklch(18.5% 0.022 262);
+      --sk-border:${BORDER}; --sk-hover:oklch(24.5% 0.026 262); --sk-track:${RAISED};
+      --sk-text:${TEXT}; --sk-text-2:oklch(82% 0.014 254); --sk-muted:${MUTED};
+      --sk-primary:${ACCENT}; --sk-primary-hover:oklch(76% 0.12 254); --sk-primary-soft:oklch(70% 0.14 255 / .15);
+      --sk-primary-deep:oklch(50% 0.14 258); --sk-on-primary:oklch(17% 0.03 262);
+      --sk-edge:oklch(58% 0.022 256); --sk-btn-edge:oklch(14% 0.02 262); --sk-btn-edge-hover:oklch(44% 0.03 260);
+      --sk-ok-text:${OK_TEXT}; --sk-danger:oklch(70% 0.16 25);
+      --sk-shadow-card:0 1px 2px oklch(0% 0 0 / .3); --sk-shadow-tab:0 1px 2px oklch(0% 0 0 / .4);
+      --sk-shadow-key:0 2px 0 0 var(--sk-btn-edge), 0 4px 6px -4px oklch(0% 0 0 / .5), inset 0 1px 0 oklch(100% 0 0 / .06);
+      --sk-shadow-key-accent:0 2px 0 0 var(--sk-primary-deep), 0 4px 6px -4px oklch(0% 0 0 / .5), inset 0 1px 0 oklch(100% 0 0 / .25);
+      --sk-shadow-press:inset 0 1px 2px oklch(0% 0 0 / .4);
+      --sk-side:${SIDE}; }
+    html.dtr-skin body, html.dtr-skin main, html.dtr-skin #content { background-color:var(--sk-bg) !important; color:var(--sk-text); }
+    html.dtr-skin body, html.dtr-skin [class*="dt-typography"], html.dtr-skin .nvd3 text,
+    html.dtr-skin .btn, html.dtr-skin input { font-family:var(--sk-font) !important; }
+    html.dtr-skin ::selection { background:var(--sk-primary-soft); color:var(--sk-text); }
+    html.dtr-skin #sidebar { background-color:var(--sk-side) !important; box-shadow:none; }
+    html.dtr-skin #sidebar .nav-link { color:var(--sk-side-text) !important; border-radius:6px; font-size:14px; font-weight:500; }
+    html.dtr-skin #sidebar .nav-link:hover { background-color:var(--sk-side-hover) !important; color:var(--sk-side-strong) !important; }
+    html.dtr-skin #sidebar .nav-link.active { background-color:var(--sk-side-active) !important; color:var(--sk-side-strong) !important;
+      border-color:transparent !important; outline:0; box-shadow:inset 2px 0 0 var(--sk-side-accent); }
+    html.dtr-skin nav.main-header .navbar { background-color:var(--sk-surface) !important; box-shadow:inset 0 -1px 0 var(--sk-border) !important; }
+    html.dtr-skin .top-bar-global-search .form-control, html.dtr-skin .twitter-typeahead .form-control {
+      background-color:var(--sk-field) !important; border:1px solid var(--sk-edge) !important; border-radius:6px; color:var(--sk-text) !important; }
+    html.dtr-skin .date-and-period-select-nav .title { font-family:var(--sk-font-display) !important; font-weight:600;
+      letter-spacing:-.02em; color:var(--sk-text) !important; }
+    html.dtr-skin .date-and-period-select-nav .date-picker { background-color:var(--sk-surface) !important; border:1px solid var(--sk-border) !important;
+      border-radius:6px !important; color:var(--sk-text) !important; box-shadow:var(--sk-shadow-card); }
+    html.dtr-skin .date-and-period-select-nav .date-picker * { color:var(--sk-text-2) !important; }
+    html.dtr-skin .btn-secondary, html.dtr-skin .btn-light, html.dtr-skin #ai-summary-trigger-button {
+      color:var(--sk-text) !important; background:var(--sk-raised) !important; border:1px solid var(--sk-btn-edge) !important;
+      border-radius:6px !important; box-shadow:var(--sk-shadow-key) !important;
+      transition:transform 120ms var(--sk-ease), box-shadow 120ms var(--sk-ease), background-color 120ms var(--sk-ease), border-color 120ms var(--sk-ease); }
+    html.dtr-skin .btn-secondary:hover, html.dtr-skin .btn-light:hover, html.dtr-skin #ai-summary-trigger-button:hover {
+      background:var(--sk-hover) !important; border-color:var(--sk-btn-edge-hover) !important; transform:translateY(-1px); }
+    html.dtr-skin .btn-secondary:active, html.dtr-skin .btn-light:active, html.dtr-skin #ai-summary-trigger-button:active {
+      transform:translateY(1px); box-shadow:var(--sk-shadow-press) !important; }
+    html.dtr-skin .btn-primary { color:var(--sk-on-primary) !important; background:var(--sk-primary) !important;
+      border:1px solid var(--sk-primary-deep) !important; border-radius:6px !important; box-shadow:var(--sk-shadow-key-accent) !important; }
+    html.dtr-skin .btn-primary:hover { background:var(--sk-primary-hover) !important; }
+    html.dtr-skin .btn:focus-visible, html.dtr-skin #ai-summary-trigger-button:focus-visible { outline:2px solid var(--sk-primary); outline-offset:2px; }
+    html.dtr-skin #ai-summary-trigger-button span { background:none !important; color:inherit !important;
+      -webkit-text-fill-color:currentColor !important; font-size:14px; font-weight:500; }
+    html.dtr-skin #ai-summary-trigger-button i { color:inherit !important; }
+    html.dtr-skin .tabs-container { background-color:var(--sk-track) !important; border-radius:8px !important; padding:3px !important;
+      box-shadow:none !important; border:0 !important; }
+    html.dtr-skin .tabs-container .tab { border-radius:6px !important; color:var(--sk-muted) !important; font-size:13px !important;
+      font-weight:500 !important; background:transparent !important; box-shadow:none !important; }
+    html.dtr-skin .tabs-container .tab.active { background-color:var(--sk-raised) !important; color:var(--sk-text) !important;
+      box-shadow:var(--sk-shadow-tab) !important; }
+    html.dtr-skin .dt-card { background-color:var(--sk-surface) !important; color:var(--sk-text); border:0 !important; border-radius:8px !important;
+      box-shadow:inset 0 0 0 1px var(--sk-border), var(--sk-shadow-card) !important; }
+    @supports (corner-shape:bevel) { html.dtr-skin .dt-card { border-radius:14px 4px 14px 4px !important; corner-shape:bevel round bevel round; } }
+    html.dtr-skin .dt-card[data-dtr-card] { box-shadow:inset 0 0 0 1px color-mix(in oklch, var(--sk-primary) 30%, transparent), var(--sk-shadow-card) !important; }
+    html.dtr-skin .dt-card--chart { overflow:hidden; }
+    html.dtr-skin .dt-card--chart .dt-typography-h6 { font-size:13px; font-weight:500 !important; letter-spacing:.01em; color:var(--sk-muted) !important; }
+    html.dtr-skin .dt-card--chart .dt-typography-h3 { font-family:var(--sk-font-display) !important; font-size:36px; font-weight:600;
+      letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+    html.dtr-skin .text-green400 { color:var(--sk-ok-text) !important; }
+    html.dtr-skin .text-red500 { color:var(--sk-danger) !important; }
+    html.dtr-skin .dt-card--chart [class*="icon-circle-question"] { opacity:.45; transition:opacity 120ms var(--sk-ease); }
+    html.dtr-skin .dt-card--chart:hover [class*="icon-circle-question"] { opacity:.9; }
+    html.dtr-skin .dt-card--chart .card-footer { background-color:transparent !important;
       -webkit-mask-image:linear-gradient(#000,transparent); mask-image:linear-gradient(#000,transparent); }
-    html.dtr-dark .dt-card--chart .nvd3 .nv-area { opacity:1 !important; fill-opacity:.14 !important;
-      stroke-width:1.5px !important; stroke-opacity:.9 !important; }
-    html.dtr-dark .dt-card--productivity-chart .nv-bar { rx:2px; }
-    html.dtr-dark .date-and-period-select-nav .dt-typography-h4 { font-weight:600; letter-spacing:-.02em; }
-    html.dtr-dark nav.main-header .navbar { background-color:${BG}d1 !important; backdrop-filter:blur(12px);
-      box-shadow:inset 0 -1px 0 ${BORDER}; }
-    html.dtr-dark #sidebar { background-color:${BG} !important; box-shadow:inset -1px 0 0 ${BORDER}; }
-    html.dtr-dark #sidebar .nav-link { border-radius:8px; font-size:14.5px; }
-    html.dtr-dark #sidebar .nav-link.active { background-color:#ffffff12 !important; }`;
+    html.dtr-skin .dt-card--chart .nvd3 .nv-area { opacity:1 !important; fill-opacity:.14 !important; stroke-width:1.5px !important; stroke-opacity:.9 !important; }
+    html.dtr-skin .dt-card--productivity-chart .nv-bar { rx:2px; }
+    html.dtr-skin .nvd3 text { fill:var(--sk-muted); }
+    html.dtr-skin .nvd3 .nv-axis line, html.dtr-skin .nvd3 .nv-axis path { stroke:var(--sk-border); }
+    html.dtr-skin .dt-card--apps [class*="header-"] { background-color:var(--sk-surface-2) !important; border-top:0 !important;
+      border-bottom:1px solid var(--sk-border); color:var(--sk-text) !important; }
+    html.dtr-skin .dt-card--apps .header-productive { color:var(--sk-ok-text) !important; }
+    html.dtr-skin .dt-card--apps .header-unproductive { color:var(--sk-danger) !important; }
+    html.dtr-skin .dt-card--apps .header-neutral { color:var(--sk-muted) !important; }
+    @media (prefers-reduced-motion:reduce) {
+      html.dtr-skin .btn, html.dtr-skin #ai-summary-trigger-button, html.dtr-skin .dt-card--chart [class*="icon-circle-question"] { transition:none !important; }
+      html.dtr-skin .btn:hover, html.dtr-skin #ai-summary-trigger-button:hover { transform:none; }
+    }`;
 
   const COLOR_PROPS = ['color', 'fill', 'stroke'];
   const BORDER_PROPS = ['border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color', 'outline-color'];
@@ -202,16 +271,23 @@
     const css = `${restoreRule(rootVars)}\n${out.join('\n')}`;
     const el = ensureStyle('dtr-dark-generated');
     if (el.textContent !== css) el.textContent = css;
-    // Own styles go last so they win over page rules of equal specificity
-    document.documentElement.append(ensureStyle('dtr-dark-base'), el, ensureStyle('dtr-dark-modern'));
+    mount();
+  }
+
+  // Own styles go last so they win over page rules of equal specificity; the skin is always on, the dark layers only when enabled
+  function mount() {
+    const skin = ensureStyle('dtr-skin');
+    if (skin.textContent !== SKIN) skin.textContent = SKIN;
+    if (enabled) document.documentElement.append(ensureStyle('dtr-dark-base'), ensureStyle('dtr-dark-generated'));
+    document.documentElement.append(skin);
   }
 
   let enabled = false;
   function apply() {
+    document.documentElement.classList.add('dtr-skin');
     document.documentElement.classList.toggle('dtr-dark', enabled);
-    if (!enabled) return;
+    if (!enabled) return mount();
     ensureStyle('dtr-dark-base').textContent = BASE;
-    ensureStyle('dtr-dark-modern').textContent = MODERN;
     build();
   }
 
@@ -225,6 +301,6 @@
     apply();
   });
   // Stylesheets finish loading after document_start
-  document.addEventListener('DOMContentLoaded', () => enabled && build());
-  window.addEventListener('load', () => enabled && build());
+  document.addEventListener('DOMContentLoaded', () => (enabled ? build() : mount()));
+  window.addEventListener('load', () => (enabled ? build() : mount()));
 })();

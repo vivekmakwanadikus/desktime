@@ -1,180 +1,329 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <title>DeskTime Remaining Time</title>
+  <meta name="description" content="Daily target, working days and days off for the DeskTime remaining-time card.">
   <style>
+    /* Hallmark · shape: app screen · genre: modern-minimal · theme: brand (it_admin, Cobalt) · redesign: restyle
+     * nav: segmented tray · signature: the week row as keycaps, each day pressed on or off over its own target · states: default, hover, focus, active, disabled, error, saved
+     * axes: brand · contrast: pass · v2.0.0 */
+    /* Hallmark · pre-emit critique: P4 H4 E4 S3 R4 V3 · weakest: S, a settings popup is any tool's; the week row as pressed keycaps over their own targets is the part only this tool has, and the palette is it_admin's tokens verbatim so the two tools read as one product */
+    @import url("https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+    /* Values are it_admin's (C:\laragon\www\it_admin\assets\it_admin.css); --ita-edge is the field edge at 3:1, which it_admin's lighter field border does not reach */
     :root {
-      --bg: #f6f7f9;
-      --surface: #ffffff;
-      --border: #e4e7ec;
-      --text: #1d2433;
-      --muted: #667085;
-      --accent: #16a34a;
-      --accent-soft: #dcfce7;
-      --accent-text: #ffffff;
-      --danger: #dc2626;
-      --half: #d97706;
-      --half-soft: #fef3c7;
-      --radius: 10px;
+      color-scheme: light dark;
+      --ita-font-display: "Familjen Grotesk", system-ui, sans-serif;
+      --ita-font-body: "IBM Plex Sans", system-ui, sans-serif;
+      --ita-font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --ita-dur-micro: 120ms;
+      --ita-dur-short: 180ms;
+      --ita-ease: cubic-bezier(.2, .7, .2, 1);
+
+      --ita-bg: oklch(96.2% 0.008 252);
+      --ita-surface: oklch(99.2% 0.004 250);
+      --ita-surface-2: oklch(97.4% 0.006 252);
+      --ita-raised: oklch(99.4% 0.003 250);
+      --ita-border: oklch(90% 0.009 252);
+      --ita-line-soft: oklch(94% 0.008 252);
+      --ita-hover: oklch(97.2% 0.01 254);
+      --ita-text: oklch(21% 0.028 262);
+      --ita-text-2: oklch(36% 0.022 260);
+      --ita-muted: oklch(50% 0.018 258);
+      --ita-primary: oklch(52% 0.19 258);
+      --ita-primary-hover: oklch(47% 0.2 260);
+      --ita-primary-soft: oklch(95% 0.028 256);
+      --ita-primary-deep: oklch(39% 0.16 260);
+      --ita-on-primary: oklch(98.6% 0.005 250);
+      --ita-danger: oklch(53% 0.19 25);
+      --ita-ok-text: oklch(45% 0.1 165);
+      --ita-warn-soft: oklch(96% 0.045 82);
+      --ita-warn-edge: oklch(85% 0.09 78);
+      --ita-warn-text: oklch(48% 0.11 60);
+      --ita-field-bg: oklch(99.4% 0.003 250);
+      --ita-edge: oklch(62% 0.018 258);
+      --ita-btn-edge: oklch(80% 0.016 254);
+      --ita-btn-edge-hover: oklch(72% 0.02 254);
+      --ita-shadow-card: 0 1px 2px oklch(21% 0.028 262 / .06);
+      --ita-shadow-tab: 0 1px 2px oklch(21% 0.028 262 / .1);
+      --ita-shadow-key: 0 2px 0 0 var(--ita-btn-edge), 0 4px 6px -4px oklch(21% 0.028 262 / .24), inset 0 1px 0 oklch(100% 0 0 / .9);
+      --ita-shadow-key-accent: 0 2px 0 0 var(--ita-primary-deep), 0 4px 6px -4px oklch(30% 0.12 260 / .4), inset 0 1px 0 oklch(100% 0 0 / .2);
+      --ita-shadow-press: inset 0 1px 2px oklch(21% 0.028 262 / .16);
+      --ita-scroll-thumb: oklch(83% 0.012 252);
+
+      --ita-radius: 8px;
+      --ita-radius-sm: 6px;
+      --text-sm: 12px;
+      --text-md: 13px;
+      --text-lg: 14px;
+      --text-xl: 17px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0f1115;
-        --surface: #181b21;
-        --border: #2a2f38;
-        --text: #e6e8ec;
-        --muted: #9aa3b2;
-        --accent: #22c55e;
-        --accent-soft: #14301f;
-        --accent-text: #06120a;
-        --danger: #f87171;
-        --half: #fbbf24;
-        --half-soft: #3a2c0c;
+        --ita-bg: oklch(17.5% 0.02 262);
+        --ita-surface: oklch(21% 0.024 262);
+        --ita-surface-2: oklch(19.5% 0.022 262);
+        --ita-raised: oklch(26.5% 0.026 262);
+        --ita-border: oklch(30% 0.024 262);
+        --ita-line-soft: oklch(25.5% 0.024 262);
+        --ita-hover: oklch(24.5% 0.026 262);
+        --ita-text: oklch(93% 0.01 250);
+        --ita-text-2: oklch(82% 0.014 254);
+        --ita-muted: oklch(69% 0.022 256);
+        --ita-primary: oklch(70% 0.14 255);
+        --ita-primary-hover: oklch(76% 0.12 254);
+        --ita-primary-soft: oklch(70% 0.14 255 / .15);
+        --ita-primary-deep: oklch(50% 0.14 258);
+        --ita-on-primary: oklch(17% 0.03 262);
+        --ita-danger: oklch(70% 0.16 25);
+        --ita-ok-text: oklch(80% 0.11 165);
+        --ita-warn-soft: oklch(78% 0.14 75 / .16);
+        --ita-warn-edge: oklch(78% 0.14 75 / .45);
+        --ita-warn-text: oklch(82% 0.13 80);
+        --ita-field-bg: oklch(18.5% 0.022 262);
+        --ita-edge: oklch(58% 0.022 256);
+        --ita-btn-edge: oklch(14% 0.02 262);
+        --ita-btn-edge-hover: oklch(44% 0.03 260);
+        --ita-shadow-card: 0 1px 2px oklch(0% 0 0 / .3);
+        --ita-shadow-tab: 0 1px 2px oklch(0% 0 0 / .4);
+        --ita-shadow-key: 0 2px 0 0 var(--ita-btn-edge), 0 4px 6px -4px oklch(0% 0 0 / .5), inset 0 1px 0 oklch(100% 0 0 / .06);
+        --ita-shadow-key-accent: 0 2px 0 0 var(--ita-primary-deep), 0 4px 6px -4px oklch(0% 0 0 / .5), inset 0 1px 0 oklch(100% 0 0 / .25);
+        --ita-shadow-press: inset 0 1px 2px oklch(0% 0 0 / .4);
+        --ita-scroll-thumb: oklch(33% 0.026 262);
       }
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; overflow-x: clip; }
     body {
-      margin: 0; width: 300px; padding: 14px;
-      background: var(--bg); color: var(--text);
-      font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      width: 360px; min-height: 480px; max-height: 600px; display: flex; flex-direction: column;
+      background: var(--ita-bg); color: var(--ita-text); font: var(--text-lg)/1.45 var(--ita-font-body);
+      -webkit-font-smoothing: antialiased;
+      caret-color: var(--ita-primary); scrollbar-color: var(--ita-scroll-thumb) transparent;
     }
-    header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    header .logo { width: 26px; height: 26px; flex: none; color: var(--accent-text); }
-    header .logo rect { fill: var(--accent); }
-    header .logo .ring { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
-    header h1 { font-size: 14px; margin: 0; font-weight: 600; }
-    .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 12px; margin-bottom: 10px;
-    }
-    .card h2 {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
-      color: var(--muted); margin: 0 0 10px;
-    }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    label.field { display: block; font-size: 12px; color: var(--muted); }
-    label.field span { display: block; margin-bottom: 4px; }
-    input, select {
-      width: 100%; padding: 7px 9px; font: inherit; color: var(--text);
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; outline: none;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    input[type="date"] { color-scheme: light dark; }
+    ::selection { color: var(--ita-text); background: var(--ita-primary-soft); }
+    [hidden] { display: none !important; }
 
-    .days { display: flex; gap: 4px; margin-top: 10px; }
-    .days label {
-      flex: 1; text-align: center; padding: 6px 0; border-radius: 8px; cursor: pointer;
-      font-size: 11px; font-weight: 600; color: var(--muted);
-      background: var(--bg); border: 1px solid var(--border); user-select: none;
-      transition: background .15s, color .15s, border-color .15s;
+    .top { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-4) var(--space-3); background: var(--ita-surface); }
+    .brand-mark {
+      width: 32px; height: 32px; flex: none; display: grid; place-items: center; color: var(--ita-on-primary);
+      background: var(--ita-primary); border-radius: var(--ita-radius-sm); box-shadow: var(--ita-shadow-key-accent);
     }
-    .days input { position: absolute; opacity: 0; pointer-events: none; }
-    .days label:has(input:checked) { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-    .days label:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-soft); }
-
-    button {
-      font: inherit; font-weight: 600; cursor: pointer; border-radius: 8px; border: 0;
-      padding: 8px 12px; background: var(--accent); color: var(--accent-text);
-      transition: filter .15s, transform .05s;
+    .brand-mark svg { width: 20px; height: 20px; }
+    .brand-mark .ring { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+    h1 {
+      margin: 0; min-width: 0; font-family: var(--ita-font-display); font-size: var(--text-xl); font-weight: 600;
+      letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; overflow-wrap: break-word;
     }
-    button:hover { filter: brightness(1.08); }
-    button:active { transform: translateY(1px); }
-    .actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-    #status { font-size: 12px; min-height: 16px; flex: 1; }
-    #status.ok { color: var(--accent); }
-    #status.err { color: var(--danger); }
 
-    .add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+    .tabbar { padding: 0 var(--space-4) var(--space-3); background: var(--ita-surface); border-bottom: 1px solid var(--ita-border); }
+    .ptabs { display: flex; gap: var(--space-1); padding: var(--space-1); background: var(--ita-bg); border-radius: var(--ita-radius); }
+    .ptab {
+      flex: 1; min-height: 28px; padding: var(--space-1) var(--space-3); font: 500 var(--text-md)/1.2 var(--ita-font-body); color: var(--ita-muted);
+      background: transparent; border: 0; border-radius: var(--ita-radius-sm); cursor: pointer; white-space: nowrap;
+      transition: color var(--ita-dur-micro) var(--ita-ease), background-color var(--ita-dur-micro) var(--ita-ease);
+    }
+    .ptab:hover { color: var(--ita-text); }
+    .ptab[aria-selected="true"] { color: var(--ita-text); background: var(--ita-raised); box-shadow: var(--ita-shadow-tab); }
+
+    .panel { flex: 1; min-height: 0; overflow: auto; padding: var(--space-4); }
+    .ita-card {
+      overflow: hidden; color: var(--ita-text); background: var(--ita-surface); border: 1px solid var(--ita-border);
+      border-radius: var(--ita-radius); box-shadow: var(--ita-shadow-card);
+    }
+    @supports (corner-shape: bevel) {
+      .ita-card { border-radius: 14px 4px 14px 4px; corner-shape: bevel round bevel round; }
+    }
+    .ita-card-body { padding: var(--space-4); }
+    .ita-card-body + .ita-card-body { border-top: 1px solid var(--ita-border); }
+
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+    .field { display: grid; align-content: start; gap: var(--space-1); min-width: 0; }
+    .field:last-child { grid-column: 1 / -1; }
+    .field span { font-size: var(--text-md); font-weight: 500; color: var(--ita-text-2); }
+    .fields .in { font-family: var(--ita-font-mono); font-size: var(--text-md); }
+
+    .in, #overrides input {
+      width: 100%; height: 36px; padding: 0 var(--space-3); font: inherit; color: var(--ita-text);
+      background: var(--ita-field-bg); border: 1px solid var(--ita-edge); border-radius: var(--ita-radius-sm);
+      font-variant-numeric: tabular-nums;
+    }
+    .in::placeholder, #overrides input::placeholder { color: var(--ita-muted); }
+    .in:disabled, #overrides input:disabled { opacity: .55; cursor: not-allowed; }
+
+    #workdays, #overrides { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-1); }
+    #overrides { margin-top: var(--space-2); }
+    #overrides input { height: 32px; padding: 0; text-align: center; font-family: var(--ita-font-mono); font-size: var(--text-sm); }
+    #workdays label {
+      position: relative; display: grid; place-items: center; min-height: 32px; color: var(--ita-text-2);
+      background: var(--ita-raised); border: 1px solid var(--ita-btn-edge); border-radius: var(--ita-radius-sm);
+      box-shadow: var(--ita-shadow-key); font: 500 var(--text-sm)/1 var(--ita-font-display); cursor: pointer; user-select: none;
+      transition: transform var(--ita-dur-micro) var(--ita-ease), box-shadow var(--ita-dur-micro) var(--ita-ease),
+        background-color var(--ita-dur-micro) var(--ita-ease), border-color var(--ita-dur-micro) var(--ita-ease);
+    }
+    #workdays label:hover { border-color: var(--ita-btn-edge-hover); transform: translateY(-1px); }
+    #workdays label:has(input:checked) {
+      color: var(--ita-primary); background: var(--ita-primary-soft); border-color: var(--ita-primary);
+      box-shadow: var(--ita-shadow-press); transform: translateY(1px);
+    }
+    #workdays input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+    .hint { margin: var(--space-2) 0 0; font-size: var(--text-sm); line-height: 1.4; color: var(--ita-muted); }
+
+    .ita-actions {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+      padding: var(--space-3) var(--space-4); background: var(--ita-surface-2); border-top: 1px solid var(--ita-border);
+    }
+    #status { flex: 1; min-height: 1lh; font-size: var(--text-md); }
+    #status.ok { color: var(--ita-ok-text); }
+    #status.err { color: var(--ita-danger); }
+
+    .btn {
+      height: 36px; padding: 0 var(--space-4); font: 500 var(--text-lg)/1 var(--ita-font-body); color: var(--ita-text);
+      background: var(--ita-raised); border: 1px solid var(--ita-btn-edge); border-radius: var(--ita-radius-sm);
+      box-shadow: var(--ita-shadow-key); cursor: pointer; white-space: nowrap;
+      transition: transform var(--ita-dur-micro) var(--ita-ease), box-shadow var(--ita-dur-micro) var(--ita-ease),
+        background-color var(--ita-dur-micro) var(--ita-ease), border-color var(--ita-dur-micro) var(--ita-ease);
+    }
+    .btn:hover:not(:disabled) { background: var(--ita-hover); border-color: var(--ita-btn-edge-hover); transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--ita-shadow-press); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn.primary { color: var(--ita-on-primary); background: var(--ita-primary); border-color: var(--ita-primary-deep); box-shadow: var(--ita-shadow-key-accent); }
+    .btn.primary:hover:not(:disabled) { background: var(--ita-primary-hover); border-color: var(--ita-primary-deep); }
+    .btn.primary:active:not(:disabled) { box-shadow: var(--ita-shadow-press); }
+
+    .add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
     .add > * { min-width: 0; }
-    .add input[type="date"] { grid-column: 1 / -1; }
+    .add .wide { grid-column: 1 / -1; }
+    #list { list-style: none; margin: 0; padding: 0; max-height: 208px; overflow-y: auto; border-top: 1px solid var(--ita-border); }
+    #list li {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto 32px; align-items: center; gap: var(--space-2);
+      min-height: 40px; border-bottom: 1px solid var(--ita-line-soft);
+    }
+    #list li.empty { display: block; padding: var(--space-3) 0; color: var(--ita-muted); font-size: var(--text-md); text-align: center; }
+    #list .date { font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+    .tag {
+      padding: 1px var(--space-2); font: 500 var(--text-sm)/1.5 var(--ita-font-display); border: 1px solid transparent; border-radius: 4px;
+    }
+    .tag.holidays { color: var(--ita-primary); background: var(--ita-primary-soft); }
+    .tag.halfDays { color: var(--ita-warn-text); background: var(--ita-warn-soft); border-color: var(--ita-warn-edge); }
+    #list button {
+      position: relative; width: 28px; height: 28px; padding: 0; font: inherit; font-size: var(--text-xl); line-height: 1;
+      color: var(--ita-muted); background: transparent; border: 0; border-radius: var(--ita-radius-sm); cursor: pointer;
+      transition: color var(--ita-dur-micro) var(--ita-ease), background-color var(--ita-dur-micro) var(--ita-ease);
+    }
+    #list button::after { content: ""; position: absolute; inset: -8px; }
+    #list button:hover { color: var(--ita-danger); background: var(--ita-hover); }
+    .link {
+      margin-top: var(--space-2); padding: var(--space-2) 0; font: 500 var(--text-md)/1.2 var(--ita-font-body); color: var(--ita-primary);
+      background: none; border: 0; text-decoration: underline; text-decoration-color: var(--ita-muted); text-underline-offset: .2em; cursor: pointer;
+    }
+    .link:hover { color: var(--ita-primary-hover); }
 
-    ul { list-style: none; padding: 0; margin: 10px 0 0; max-height: 170px; overflow-y: auto; }
-    li {
-      display: flex; align-items: center; gap: 8px; padding: 6px 4px;
-      border-top: 1px solid var(--border);
+    .backup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+    #backupStatus { min-height: 1lh; margin: 0; padding: 0 var(--space-4) var(--space-4); }
+    #backupStatus.err { color: var(--ita-danger); }
+
+    .foot { display: flex; align-items: center; padding: var(--space-3) var(--space-4); background: var(--ita-surface); border-top: 1px solid var(--ita-border); }
+    .switch { position: relative; display: inline-flex; align-items: center; gap: var(--space-3); font-size: var(--text-md); color: var(--ita-text-2); border-radius: var(--ita-radius-sm); cursor: pointer; }
+    .switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+    .track {
+      position: relative; flex: none; width: 32px; height: 20px; border-radius: 999px; background: var(--ita-edge);
+      transition: background-color var(--ita-dur-short) var(--ita-ease);
     }
-    li:first-child { border-top: 0; }
-    li .date { flex: 1; font-variant-numeric: tabular-nums; }
-    .tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
-    .tag.holidays { background: var(--accent-soft); color: var(--accent); }
-    .tag.halfDays { background: var(--half-soft); color: var(--half); }
-    li button {
-      background: transparent; color: var(--muted); padding: 2px 6px; font-size: 15px; line-height: 1;
+    .track::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+      background: var(--ita-raised); transition: transform var(--ita-dur-short) var(--ita-ease);
     }
-    li button:hover { color: var(--danger); filter: none; }
-    .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 0 2px; }
-    .hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
-    .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .toggle input { width: auto; accent-color: var(--accent); }
-    .overrides { display: flex; gap: 4px; margin-top: 4px; }
-    .overrides input { flex: 1; min-width: 0; padding: 5px 0; text-align: center; font-size: 11px; }
-    button.link {
-      background: transparent; color: var(--muted); padding: 0; margin-top: 8px;
-      font-size: 11px; font-weight: 500; text-decoration: underline;
+    .switch input:checked + .track { background: var(--ita-primary); }
+    .switch input:checked + .track::after { transform: translateX(12px); }
+
+    .in:focus-visible, #overrides input:focus-visible { outline: 2px solid var(--ita-primary); outline-offset: -1px; }
+    .btn:focus-visible, .ptab:focus-visible, #list button:focus-visible, .link:focus-visible,
+    #workdays label:has(input:focus-visible), .switch:has(input:focus-visible) { outline: 2px solid var(--ita-primary); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+      .btn:hover:not(:disabled), #workdays label:hover { transform: none; }
     }
-    button.link:hover { color: var(--danger); filter: none; }
-    .backup { display: flex; gap: 8px; }
-    .backup button { flex: 1; }
-    #backupStatus.err { color: var(--danger); }
   </style>
 </head>
 <body>
-  <header>
-    <svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="24" height="24" rx="7"/>
-      <circle class="ring" cx="12" cy="12" r="6.5" stroke-width="2.2" opacity=".35"/>
-      <path class="ring" d="M12 5.5A6.5 6.5 0 1 1 5.5 12" stroke-width="2.2"/>
-      <path class="ring" d="M12 8.6V12h2.4" stroke-width="1.6"/>
-    </svg>
+  <header class="top">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="ring" cx="12" cy="12" r="6.5" stroke-width="2.2" opacity=".35"/>
+        <path class="ring" d="M12 5.5A6.5 6.5 0 1 1 5.5 12" stroke-width="2.2"/>
+        <path class="ring" d="M12 8.6V12h2.4" stroke-width="1.6"/>
+      </svg>
+    </div>
     <h1>DeskTime Remaining</h1>
   </header>
 
-  <section class="card">
-    <h2>Schedule</h2>
-    <div class="row">
-      <label class="field"><span>Daily target</span><input id="target" placeholder="8:30"></label>
-      <label class="field"><span>End of day (24h)</span><input id="eod" placeholder="18:30"></label>
-      <label class="field"><span>Start of day (24h)</span><input id="sod" placeholder="optional"></label>
+  <div class="tabbar">
+    <div class="ptabs" role="tablist" aria-label="Sections">
+      <button type="button" class="ptab" role="tab" id="tab-schedule" aria-controls="panel-schedule" aria-selected="true">Schedule</button>
+      <button type="button" class="ptab" role="tab" id="tab-days" aria-controls="panel-days" aria-selected="false" tabindex="-1">Days off</button>
+      <button type="button" class="ptab" role="tab" id="tab-backup" aria-controls="panel-backup" aria-selected="false" tabindex="-1">Backup</button>
     </div>
-    <div id="workdays" class="days" aria-label="Working days"></div>
-    <div id="overrides" class="overrides" aria-label="Per-day targets"></div>
-    <div class="hint">Per-day target, e.g. 6:00. Blank uses the daily target.</div>
-    <div class="actions">
-      <div id="status"></div>
-      <button id="save">Save</button>
-    </div>
-  </section>
+  </div>
 
-  <section class="card">
-    <h2>Appearance</h2>
-    <label class="toggle"><input id="dark" type="checkbox">Dark theme on DeskTime</label>
-  </section>
+  <main class="panel">
+    <section id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule">
+      <div class="ita-card">
+        <div class="ita-card-body fields">
+          <label class="field"><span>Daily target</span><input id="target" class="in" placeholder="8:30" autocomplete="off"></label>
+          <label class="field"><span>End of day (24h)</span><input id="eod" class="in" placeholder="18:30" autocomplete="off"></label>
+          <label class="field"><span>Start of day (24h)</span><input id="sod" class="in" placeholder="optional" autocomplete="off"></label>
+        </div>
+        <div class="ita-card-body">
+          <div id="workdays" role="group" aria-label="Working days"></div>
+          <div id="overrides" role="group" aria-label="Per-day targets"></div>
+          <p class="hint">Per-day target, e.g. 6:00. Blank uses the daily target.</p>
+        </div>
+        <div class="ita-actions">
+          <div id="status" role="status"></div>
+          <button id="save" type="button" class="btn primary">Save</button>
+        </div>
+      </div>
+    </section>
 
-  <section class="card">
-    <h2>Days off</h2>
-    <div class="add">
-      <input id="holiday" type="date" aria-label="Date">
-      <select id="kind" aria-label="Type">
-        <option value="holidays">Holiday</option>
-        <option value="halfDays">Half day</option>
-      </select>
-      <button id="add">Add</button>
-    </div>
-    <ul id="list"></ul>
-    <button id="prune" class="link" hidden></button>
-    <div class="hint">Tip: right-click a day in the DeskTime calendar to mark it.</div>
-  </section>
+    <section id="panel-days" role="tabpanel" aria-labelledby="tab-days" hidden>
+      <div class="ita-card">
+        <div class="ita-card-body add">
+          <input id="holiday" class="in wide" type="date" aria-label="Date">
+          <select id="kind" class="in" aria-label="Type">
+            <option value="holidays">Holiday</option>
+            <option value="halfDays">Half day</option>
+          </select>
+          <button id="add" type="button" class="btn primary">Add</button>
+        </div>
+        <div class="ita-card-body">
+          <ul id="list"></ul>
+          <button id="prune" type="button" class="link" hidden></button>
+          <p class="hint">Tip: right-click a day in the DeskTime calendar to mark it.</p>
+        </div>
+      </div>
+    </section>
 
-  <section class="card">
-    <h2>Backup</h2>
-    <div class="backup">
-      <button id="export">Export</button>
-      <button id="import">Import</button>
-      <input id="importFile" type="file" accept="application/json,.json" hidden>
-    </div>
-    <div id="backupStatus" class="hint"></div>
-  </section>
+    <section id="panel-backup" role="tabpanel" aria-labelledby="tab-backup" hidden>
+      <div class="ita-card">
+        <div class="ita-card-body backup">
+          <button id="export" type="button" class="btn">Export</button>
+          <button id="import" type="button" class="btn">Import</button>
+          <input id="importFile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div id="backupStatus" class="hint" role="status"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <label class="switch"><input id="dark" type="checkbox" role="switch"><span class="track"></span>Dark theme on DeskTime</label>
+  </footer>
 
   <script src="popup.js"></script>
 </body>
