@@ -42,8 +42,7 @@
     root.classList.toggle('dtr-compact', on);
     setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
   }
-  // On before settings load, so the default layout does not flash the old one
-  document.documentElement.classList.add('dtr-compact');
+  // dark.js sets dtr-compact at document_start from its cache (layout rules live there too), so the first paint is right
 
   chrome.storage.sync.get(DEFAULTS, (data) => {
     applySettings(data);
@@ -432,20 +431,6 @@
     .dtr-value.pos { color:var(--dtr-ok-text); }
     .dtr-value.neg { color:var(--dtr-neg); }
     .dtr-note { font-weight:400; color:var(--dtr-muted); }
-    html.dtr-compact [data-dtr-grid] { display:grid !important; grid-template-columns:minmax(0,1fr); gap:16px; margin:0 0 16px !important; }
-    html.dtr-compact [data-dtr-grid] > .col { width:auto; max-width:none; padding:0 !important; margin:0 !important; }
-    html.dtr-compact [data-dtr-grid] > [data-dtr-col="hide"] { display:none !important; }
-    html.dtr-compact [data-dtr-grid] .dt-card--chart .card-footer,
-    html.dtr-compact [data-dtr-grid] .dt-card--chart [class*="icon-circle-question"] { display:none !important; }
-    html.dtr-compact .dt-card--projects-chart { display:none !important; }
-    @media (min-width:1100px) {
-      html.dtr-compact [data-dtr-page] { display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,4fr); gap:16px; }
-      html.dtr-compact [data-dtr-page] > * { grid-column:1 / -1; }
-      html.dtr-compact [data-dtr-page] > .alert { order:-2; }
-      html.dtr-compact [data-dtr-page] > [data-dtr-grid] { display:contents !important; }
-      html.dtr-compact [data-dtr-page] > [data-dtr-grid] > [data-dtr-col="hero"] { grid-column:1; order:-1; }
-      html.dtr-compact [data-dtr-page] > .dt-card--productivity-chart { grid-column:2; order:-1; margin:0 !important; }
-    }
     .dtr-menu { --m-bg:oklch(99.4% 0.003 250); --m-border:oklch(90% 0.009 252); --m-text:oklch(21% 0.028 262);
       --m-muted:oklch(50% 0.018 258); --m-hover:oklch(97.2% 0.01 254); --m-accent:oklch(52% 0.19 258);
       --m-focus:oklch(52% 0.19 258); --m-shadow:0 8px 24px oklch(21% 0.028 262 / .16);
@@ -519,8 +504,20 @@
   const HIDDEN_CARDS = new Set(['Arrival time', 'Left time', 'Productive time', 'Desktime time', 'Time at work', 'Projects time', 'Productivity']);
 
   // Tag the card grid so CSS can lay it out: hero card beside the productivity bar, other summary cards hidden
+  // dark.js hides the cards (dtr-ready missing) until the layout is final: charts get one resize, then show
+  let revealed = false;
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => document.documentElement.classList.add('dtr-ready'), 150);
+    }, 100);
+  }
+
   function arrangeCards() {
     let grid = null;
+    let hasHero = false;
     for (const card of document.querySelectorAll('.dt-card--chart')) {
       const col = card.parentElement;
       if (!col?.classList.contains('col')) continue;
@@ -528,24 +525,25 @@
       const role = card.hasAttribute('data-dtr-card') ? 'hero' : HIDDEN_CARDS.has(title) ? 'hide' : null;
       if (!role) continue;
       grid = col.parentElement;
+      if (role === 'hero') hasHero = true;
       if (col.getAttribute('data-dtr-col') !== role) col.setAttribute('data-dtr-col', role);
     }
     if (!grid) return;
-    injectStyles();
     grid.setAttribute('data-dtr-grid', '');
     // Chart card is a sibling of the grid; narrower now, so charts need a resize to redraw
     const page = grid.parentElement;
     if (page.querySelector(':scope > .dt-card--productivity-chart') && !page.hasAttribute('data-dtr-page')) {
       page.setAttribute('data-dtr-page', '');
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     }
+    if (hasHero) reveal();
   }
 
   function update() {
+    // Effectiveness card first: arrangeCards needs it marked to place the hero column in the same pass
+    const card = findEffectivenessCard();
     arrangeCards();
     const productive = readCardMinutes('Productive time');
     const range = readRange();
-    const card = findEffectivenessCard();
     if (productive === null || !range || !card) {
       console.debug('[DeskTime Remaining]', { productive, range, card: !!card });
       return;

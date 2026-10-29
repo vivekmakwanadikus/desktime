@@ -26,6 +26,7 @@
       --dt-border-primary:#ffffff52; --dt-border-secondary:#ffffff2e; --dt-border-tertiary:#ffffff14;
       --dt-background-dynamic-lvl-1:#ffffff08; --dt-background-dynamic-lvl-2:#ffffff12;
       --dt-interactive-hover:#ffffff14; --dt-interactive-pressed:#ffffff24; }
+    html.dtr-dark { background-color:${BG}; }
     html.dtr-dark body { background-color:${BG}; color:${TEXT}; }`;
 
   // The it_admin (Cobalt) skin, always on: cool paper and cobalt in light, graphite in dark. Values are it_admin's
@@ -63,7 +64,23 @@
       --sk-shadow-key-accent:0 2px 0 0 var(--sk-primary-deep), 0 4px 6px -4px oklch(0% 0 0 / .5), inset 0 1px 0 oklch(100% 0 0 / .25);
       --sk-shadow-press:inset 0 1px 2px oklch(0% 0 0 / .4);
       --sk-side:${SIDE}; }
+    html.dtr-skin { background-color:var(--sk-bg); }
     html.dtr-skin body, html.dtr-skin main, html.dtr-skin #content { background-color:var(--sk-bg) !important; color:var(--sk-text); }
+    html.dtr-compact:not(.dtr-ready) .dt-card--chart, html.dtr-compact:not(.dtr-ready) .dt-card--productivity-chart { visibility:hidden; }
+    html.dtr-compact [data-dtr-grid] { display:grid !important; grid-template-columns:minmax(0,1fr); gap:16px; margin:0 0 16px !important; }
+    html.dtr-compact [data-dtr-grid] > .col { width:auto; max-width:none; padding:0 !important; margin:0 !important; }
+    html.dtr-compact [data-dtr-grid] > [data-dtr-col="hide"] { display:none !important; }
+    html.dtr-compact [data-dtr-grid] .dt-card--chart .card-footer,
+    html.dtr-compact [data-dtr-grid] .dt-card--chart [class*="icon-circle-question"] { display:none !important; }
+    html.dtr-compact .dt-card--projects-chart { display:none !important; }
+    @media (min-width:1100px) {
+      html.dtr-compact [data-dtr-page] { display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,4fr); gap:16px; }
+      html.dtr-compact [data-dtr-page] > * { grid-column:1 / -1; }
+      html.dtr-compact [data-dtr-page] > .alert { order:-2; }
+      html.dtr-compact [data-dtr-page] > [data-dtr-grid] { display:contents !important; }
+      html.dtr-compact [data-dtr-page] > [data-dtr-grid] > [data-dtr-col="hero"] { grid-column:1; order:-1; }
+      html.dtr-compact [data-dtr-page] > .dt-card--productivity-chart { grid-column:2; order:-1; margin:0 !important; }
+    }
     html.dtr-skin body, html.dtr-skin [class*="dt-typography"], html.dtr-skin .nvd3 text,
     html.dtr-skin .btn, html.dtr-skin input { font-family:var(--sk-font) !important; }
     html.dtr-skin ::selection { background:var(--sk-primary-soft); color:var(--sk-text); }
@@ -271,6 +288,11 @@
     const css = `${restoreRule(rootVars)}\n${out.join('\n')}`;
     const el = ensureStyle('dtr-dark-generated');
     if (el.textContent !== css) el.textContent = css;
+    try {
+      localStorage.setItem(CSS_KEY, css);
+    } catch (e) {
+      // Cache is an optimisation only
+    }
     mount();
   }
 
@@ -282,22 +304,70 @@
     document.documentElement.append(skin);
   }
 
-  let enabled = false;
+  // chrome.storage answers asynchronously (bridge round trip), after the first paint. The page's own
+  // localStorage is synchronous, so the last known theme, layout and generated dark CSS are cached there
+  // and applied before anything renders; chrome.storage stays the source of truth and corrects the cache.
+  const CACHE_KEY = 'dtr-cache';
+  const CSS_KEY = 'dtr-dark-css';
+  const root = document.documentElement;
+
+  function readCache() {
+    try {
+      return JSON.parse(localStorage.getItem(CACHE_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeCache(patch) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ...readCache(), ...patch }));
+    } catch (e) {
+      // Storage blocked or full: next load just waits for chrome.storage
+    }
+  }
+
+  let enabled = readCache().darkMode === true;
   function apply() {
-    document.documentElement.classList.add('dtr-skin');
-    document.documentElement.classList.toggle('dtr-dark', enabled);
+    root.classList.add('dtr-skin');
+    root.classList.toggle('dtr-dark', enabled);
     if (!enabled) return mount();
     ensureStyle('dtr-dark-base').textContent = BASE;
     build();
   }
 
-  chrome.storage.sync.get({ darkMode: false }, (data) => {
+  // Layout class is owned here (document_start) so the first paint already has it; compact is the default
+  function setCompact(on) {
+    root.classList.toggle('dtr-compact', on);
+    writeCache({ compact: on });
+  }
+  setCompact(readCache().compact !== false);
+  // Layout is final once content.js has arranged the cards; if it never does (other page, slow load), show anyway
+  setTimeout(() => root.classList.add('dtr-ready'), 2000);
+
+  // Synchronous first paint from the cache
+  if (enabled) {
+    try {
+      const cached = localStorage.getItem(CSS_KEY);
+      if (cached) ensureStyle('dtr-dark-generated').textContent = cached;
+    } catch (e) {
+      // No cached CSS: generated rules arrive once the page stylesheets load
+    }
+  }
+  apply();
+
+  chrome.storage.sync.get({ darkMode: false, compactLayout: true }, (data) => {
     enabled = data.darkMode;
+    writeCache({ darkMode: enabled });
+    setCompact(data.compactLayout !== false);
     apply();
   });
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== 'sync' || !changes.darkMode) return;
+    if (area !== 'sync') return;
+    if (changes.compactLayout) setCompact(changes.compactLayout.newValue !== false);
+    if (!changes.darkMode) return;
     enabled = !!changes.darkMode.newValue;
+    writeCache({ darkMode: enabled });
     apply();
   });
   // Stylesheets finish loading after document_start
