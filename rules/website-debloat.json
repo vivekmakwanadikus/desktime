@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "initiatorDomains": ["desktime.com"],
+      "requestDomains": [
+        "google-analytics.com",
+        "analytics.google.com",
+        "doubleclick.net",
+        "googleadservices.com",
+        "hotjar.com",
+        "hotjar.io",
+        "clarity.ms"
+      ],
+      "resourceTypes": ["script", "xmlhttprequest", "ping", "image", "sub_frame", "websocket", "other"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "initiatorDomains": ["desktime.com"],
+      "urlFilter": "||googletagmanager.com/gtm.js",
+      "resourceTypes": ["script"]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": { "type": "block" },
+    "condition": {
+      "initiatorDomains": ["desktime.com"],
+      "urlFilter": "||googletagmanager.com/gtag/js",
+      "resourceTypes": ["script"]
+    }
+  }
+]

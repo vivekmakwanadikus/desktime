@@ -3,7 +3,12 @@
   "name": "DeskTime Remaining Time",
   "version": "1.1.0",
   "description": "Shows remaining productive time on DeskTime My DeskTime page.",
-  "permissions": ["storage", "alarms", "userScripts"],
+  "permissions": ["storage", "alarms", "userScripts", "declarativeNetRequest"],
+  "declarative_net_request": {
+    "rule_resources": [
+      { "id": "website_debloat", "enabled": true, "path": "rules/website-debloat.json" }
+    ]
+  },
   "host_permissions": [
     "https://desktime.com/app/*",
     "https://*.desktime.com/app/*",

@@ -540,7 +540,7 @@
 
   // Neon productivity bar: CSS in dark.js restyles bars tagged .dtr-nb; nvd3 redraws replace the rects, so tag on every pass.
   // The intro animation plays once per card, and only after the layout is revealed (the card is hidden until then)
-  const NEON_STEP_MS = 22;
+  const NEON_INTRO_MS = 220;
   const NEON_DEFS = '<svg id="dtr-neon-defs" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'
     + '<linearGradient id="dtr-neon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00ffa3"/>'
     + '<stop offset="1" stop-color="#00b7ff"/></linearGradient></defs></svg>';
@@ -563,14 +563,8 @@
     const bars = [...card.querySelectorAll('.dtr-nb')].filter(b => parseFloat(b.getAttribute('height')) > 0);
     if (!bars.length) return;
     card.setAttribute('data-dtr-neon', '');
-    bars.forEach((b, i) => b.style.setProperty('--dtr-i', i));
-    const total = bars.length * NEON_STEP_MS + 550;
-    const start = card.querySelector('.interval.online');
-    const now = card.querySelector('.interval.now');
-    if (start && now) now.style.setProperty('--dtr-now-from', `${start.getBoundingClientRect().left - now.getBoundingClientRect().left}px`);
-    card.style.setProperty('--dtr-play', `${total}ms`);
     card.classList.add('dtr-neon-play');
-    setTimeout(() => card.classList.remove('dtr-neon-play'), total + 300);
+    setTimeout(() => card.classList.remove('dtr-neon-play'), NEON_INTRO_MS);
   }
 
   function update() {

@@ -142,7 +142,7 @@
     html.dtr-skin .dt-card--apps .header-unproductive { color:var(--sk-danger) !important; }
     html.dtr-skin .dt-card--apps .header-neutral { color:var(--sk-muted) !important; }
     /* Neon productivity bar: dark card, glowing green bars (.dtr-nb, tagged by content.js), glowing timeline and NOW marker.
-       .dtr-neon-play is added once per card by content.js to run the intro: bars rise in turn, timeline wipes, NOW sweeps in */
+       .dtr-neon-play is added once per card by content.js to run the intro: bars fade in without changing chart geometry */
     html.dtr-skin .dt-card.dt-card--productivity-chart { background-color:#070b16 !important; color:#e6ecf5;
       box-shadow:inset 0 0 0 1px #00ffff33, 0 0 40px #00ffff14, inset 0 0 30px #00ffff12 !important; }
     html.dtr-skin .dt-card--productivity-chart .dt-typography-h6 { color:#e6ecf5 !important; }
@@ -152,13 +152,8 @@
     html.dtr-skin .dt-card--productivity-chart .interval.online { background-color:#19a8ff !important; border-radius:7px; box-shadow:0 0 10px #19a8ffaa; }
     html.dtr-skin .dt-card--productivity-chart .interval.now { background-color:#ff2fd6 !important; box-shadow:0 0 10px #ff2fd6;
       animation:dtr-blink 1.2s ease-in-out infinite; }
-    html.dtr-skin .dtr-neon-play .dtr-nb { transform-box:fill-box; transform-origin:50% 100%;
-      animation:dtr-grow .55s cubic-bezier(.2, .8, .2, 1) both; animation-delay:calc(var(--dtr-i, 0) * 22ms); }
-    html.dtr-skin .dtr-neon-play .x-axis.timeline .intervals { animation:dtr-wipe var(--dtr-play, 1.6s) linear .1s both; }
-    html.dtr-skin .dtr-neon-play .interval.now { animation:dtr-sweep var(--dtr-play, 1.6s) linear .1s both; }
-    @keyframes dtr-grow { from { scale:1 0; opacity:0; } 60% { opacity:1; } to { scale:1 1; opacity:1; } }
-    @keyframes dtr-wipe { from { clip-path:inset(-12px 100% -12px -12px); } to { clip-path:inset(-12px -12px -12px -12px); } }
-    @keyframes dtr-sweep { from { translate:var(--dtr-now-from, 0px) 0; } to { translate:0 0; } }
+    html.dtr-skin .dtr-neon-play .dtr-nb { animation:dtr-bar-fade .22s ease-out both; }
+    @keyframes dtr-bar-fade { from { opacity:.4; } to { opacity:1; } }
     @keyframes dtr-blink { 50% { opacity:.3; } }
     @media (prefers-reduced-motion:reduce) {
       html.dtr-skin .dtr-neon-play .dtr-nb, html.dtr-skin .dtr-neon-play .intervals, html.dtr-skin .interval.now { animation:none !important; }
