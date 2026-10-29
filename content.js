@@ -438,18 +438,6 @@
     html.dtr-compact [data-dtr-grid] .dt-card--chart .card-footer,
     html.dtr-compact [data-dtr-grid] .dt-card--chart [class*="icon-circle-question"] { display:none !important; }
     html.dtr-compact .dt-card--projects-chart { display:none !important; }
-    .dtr.dtr-chart { display:none; padding:0 24px 16px; }
-    html.dtr-compact [data-dtr-chart] { position:relative; }
-    html.dtr-compact [data-dtr-chart] .dtr-chart { display:block; }
-    html.dtr-compact [data-dtr-chart] .table-responsive { position:absolute; top:0; left:0; width:100%; visibility:hidden; pointer-events:none; }
-    .dtr-chart svg { display:block; width:100%; overflow:visible; }
-    .dtr-chart text { font-size:11px; fill:var(--dtr-muted); }
-    .dtr-chart text.dtr-ok-text { fill:var(--dtr-ok-text); }
-    .dtr-chart text.dtr-tag { font-size:12px; font-weight:600; fill:var(--dtr-ink); font-variant-numeric:tabular-nums; }
-    .dtr-star { fill:var(--dtr-ink); opacity:.2; animation:dtr-twinkle 3s ease-in-out infinite; }
-    .dtr-fade { opacity:0; transition:opacity .6s ease; }
-    .dtr-fade.on { opacity:1; }
-    @keyframes dtr-twinkle { 50% { opacity:.04; } }
     @media (min-width:1100px) {
       html.dtr-compact [data-dtr-page] { display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,4fr); gap:16px; }
       html.dtr-compact [data-dtr-page] > * { grid-column:1 / -1; }
@@ -472,7 +460,7 @@
     .dtr-menu-item:focus-visible { outline:2px solid var(--m-focus); outline-offset:-2px; }
     .dtr-menu-item .check { color:var(--m-accent); font-weight:700; }
     @keyframes dtr-pop { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:none; } }
-    @media (prefers-reduced-motion:reduce) { .dtr-menu, .dtr-star { animation:none; } .dtr-fade { transition:none; } }
+    @media (prefers-reduced-motion:reduce) { .dtr-menu { animation:none; } }
     html.dtr-dark .dtr { --dtr-primary:oklch(70% 0.14 255); --dtr-ok:oklch(72% 0.12 165); --dtr-ok-text:oklch(80% 0.11 165);
       --dtr-muted:oklch(69% 0.022 256); --dtr-track:oklch(26.5% 0.026 262); --dtr-line:oklch(25.5% 0.024 262);
       --dtr-ink:oklch(93% 0.01 250); --dtr-neg:oklch(70% 0.16 25); }
@@ -553,276 +541,8 @@
     }
   }
 
-  // Day view productivity bar as a pace line: productive minutes added up through the day against the pace that reaches
-  // target by end of day, with a rocket that flies the line on load. Data comes from DeskTime's own bar chart (5-minute
-  // buckets), which stays in the page, hidden.
-  const BUCKET_MIN = 5;
-  const CHART_H = 190;
-  const FLIGHT_MS = 3600;
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-  // Productive share (0-100) per bucket, read from the chart's first series; start is the first axis hour in minutes
-  function readProductivity(card) {
-    const bars = [...card.querySelectorAll('.nv-series-0 .nv-bar')];
-    const hour = [...card.querySelectorAll('.tick')].map(t => t.textContent.trim().match(/^(\d{1,2}) (AM|PM)$/)).find(Boolean);
-    const quarter = [...card.querySelectorAll('.nv-y .tick')].find(t => t.textContent.trim() === '25%')
-      ?.getAttribute('transform').match(/,\s*([\d.]+)\)/);
-    if (!bars.length || !hour || !quarter) return null;
-    const plotH = +quarter[1] / 0.75;
-    const values = bars.map(b => {
-      const h = +b.getAttribute('height');
-      return h > 1.5 ? Math.min(100, (h / plotH) * 100) : 0;
-    });
-    return { start: ((+hour[1] % 12) + (hour[2] === 'PM' ? 12 : 0)) * 60, values };
-  }
-
-  function fmtHour(min) {
-    const h = Math.floor(min / 60) % 24;
-    return `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
-  }
-
-  const easeInOut = p => (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2);
-
-  // Everything the chart draws for the day on screen; null when there is no day-view data to draw
-  function chartModel(card) {
-    const data = readProductivity(card);
-    const range = readRange();
-    if (!data || !range || range.isRange) return null;
-    const { start, values } = data;
-    const first = values.findIndex(v => v > 0);
-    if (first < 0) return null;
-    const date = range.start;
-    const today = sameDay(date, new Date());
-    const now = new Date();
-    const nowMin = today
-      ? Math.min(start + values.length * BUCKET_MIN, Math.max(start, now.getHours() * 60 + now.getMinutes()))
-      : start + (values.findLastIndex(v => v > 0) + 1) * BUCKET_MIN;
-    const arrive = start + first * BUCKET_MIN;
-    const pts = [[arrive, 0]];
-    let done = 0;
-    values.forEach((v, i) => {
-      const from = start + i * BUCKET_MIN;
-      if (from < arrive || from >= nowMin) return;
-      done += (v / 100) * BUCKET_MIN;
-      pts.push([Math.min(from + BUCKET_MIN, nowMin), done]);
-    });
-    if (pts.length < 2) pts.push([arrive + 1, done]);
-    const target = customHalfDays.includes(toKey(date)) ? targetFor(date) / 2 : targetFor(date);
-    return {
-      start, span: values.length * BUCKET_MIN, pts, done, target, nowMin,
-      paceStart: startOfDayMin ?? arrive, paceEnd: endOfDayMin,
-      projEnd: today && target > 0 && done < target ? nowMin + (target - done) : null,
-    };
-  }
-
-  const ROCKET = `<g data-r="rocket">
-    <g data-r="flame"><path d="M-15,0 L-31,-5.5 L-25,0 L-31,5.5 Z" fill="#ff8a1f"/><path d="M-15,0 L-24,-3 L-20,0 L-24,3 Z" fill="#ffd24a"/></g>
-    <path d="M-6,-5 L-15,-13 L-15,-5 Z M-6,5 L-15,13 L-15,5 Z" fill="#e5484d"/>
-    <path d="M-15,-5.5 Q-15,-7 -13,-7 L5,-7 Q15,-5 20,0 Q15,5 5,7 L-13,7 Q-15,7 -15,5.5 Z" fill="#f4f6fb" stroke="#9aa3b8" stroke-width=".8"/>
-    <path d="M9,-6.2 Q15,-4.5 20,0 Q15,4.5 9,6.2 Q12,0 9,-6.2 Z" fill="#e5484d"/>
-    <circle cx="2" cy="0" r="3.2" fill="#3b82f6" stroke="#9aa3b8" stroke-width=".8"/>
-    <circle cx="1" cy="-1" r="1" fill="#fff" opacity=".8"/></g>`;
-
-  const CHART_SVG = `<svg role="img" aria-label="Productive minutes through the day">
-    <defs>
-      <clipPath id="dtr-reveal"><rect data-r="reveal" x="0" y="0" height="${CHART_H}"/></clipPath>
-      <linearGradient id="dtr-fill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="var(--dtr-primary)" stop-opacity=".32"/><stop offset="1" stop-color="var(--dtr-primary)" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    <g data-r="stars"></g><g data-r="grid"></g>
-    <line data-r="pace" class="dtr-fade" stroke="var(--dtr-muted)" stroke-width="1.5" stroke-dasharray="5 4"/>
-    <line data-r="proj" class="dtr-fade" stroke="var(--dtr-ok)" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/>
-    <text data-r="projLbl" class="dtr-fade dtr-ok-text" text-anchor="end"></text>
-    <path data-r="area" clip-path="url(#dtr-reveal)" fill="url(#dtr-fill)"/>
-    <path data-r="line" fill="none" stroke="var(--dtr-primary)" stroke-width="2.75" stroke-linejoin="round" stroke-linecap="round"/>
-    <g data-r="trail"></g>${ROCKET}
-    <text data-r="tag" class="dtr-tag" text-anchor="middle"></text>
-  </svg>`;
-
-  let chart = null;
-
-  function createChart(box) {
-    box.innerHTML = CHART_SVG;
-    box.querySelector('svg').style.height = `${CHART_H}px`;
-    const refs = {};
-    for (const el of box.querySelectorAll('[data-r]')) refs[el.dataset.r] = el;
-    const c = { box, svg: box.querySelector('svg'), refs, model: null, sig: null, key: null, geo: null, total: 1, particles: [], flying: false, t0: null, angle: 0, frame: 0 };
-    // Width follows the card, so the drawing is rebuilt when it changes
-    new ResizeObserver(() => c.model && layoutChart(c)).observe(c.svg);
-    requestAnimationFrame(function step(ts) {
-      if (!box.isConnected) return;
-      frameChart(c, ts);
-      requestAnimationFrame(step);
-    });
-    return c;
-  }
-
-  // Dashed pace and projection fade in once the rocket has landed
-  function setFades(c) {
-    for (const name of ['pace', 'proj', 'projLbl']) c.refs[name].classList.toggle('on', !c.flying);
-  }
-
-  function layoutChart(c) {
-    const { refs, model: m } = c;
-    const W = Math.max(320, c.svg.getBoundingClientRect().width || 900);
-    const H = CHART_H, L = 40, R = 14, T = 24, B = 24;
-    const yMax = Math.max(m.target, m.done, 60);
-    const x = t => L + ((t - m.start) / m.span) * (W - L - R);
-    const y = v => H - B - (v / yMax) * (H - B - T);
-    c.geo = { W, H, B, T, yMax };
-    c.svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-
-    let grid = '';
-    const row = (v, label, stroke) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${stroke}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${label}</text>`;
-    for (let v = 0; v <= yMax; v += 120) if (!m.target || Math.abs(v - m.target) >= 25) grid += row(v, `${v / 60}h`, 'var(--dtr-line)');
-    if (m.target) grid += row(m.target, `${+(m.target / 60).toFixed(1)}h`, 'var(--dtr-track)');
-    const hourStep = W < 640 ? 120 : 60;
-    for (let t = Math.ceil(m.start / hourStep) * hourStep; t <= m.start + m.span; t += hourStep) {
-      grid += `<text x="${x(t)}" y="${H - 6}" text-anchor="middle">${fmtHour(t)}</text>`;
-    }
-    refs.grid.innerHTML = grid;
-
-    let seed = 7;
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    let stars = '';
-    for (let i = 0; i < 18; i++) stars += `<circle class="dtr-star" cx="${(rnd() * W).toFixed(0)}" cy="${(rnd() * (H - B)).toFixed(0)}" r="${(0.7 + rnd()).toFixed(1)}" style="animation-delay:${(rnd() * 3).toFixed(1)}s"/>`;
-    refs.stars.innerHTML = stars;
-
-    const path = m.pts.map(([t, v], i) => `${i ? 'L' : 'M'}${x(t).toFixed(1)},${y(v).toFixed(1)}`).join('');
-    refs.line.setAttribute('d', path);
-    refs.area.setAttribute('d', `${path}L${x(m.nowMin)},${y(0)}L${x(m.pts[0][0])},${y(0)}Z`);
-    c.total = refs.line.getTotalLength() || 1;
-    refs.line.style.strokeDasharray = c.total;
-
-    const axisEnd = m.start + m.span;
-    const paceEnd = Math.min(m.paceEnd, axisEnd);
-    const line = (el, x1, y1, x2, y2) => {
-      el.setAttribute('x1', x1); el.setAttribute('y1', y1); el.setAttribute('x2', x2); el.setAttribute('y2', y2);
-    };
-    const paced = m.target > 0 && m.paceEnd > m.paceStart;
-    refs.pace.style.display = paced ? '' : 'none';
-    if (paced) line(refs.pace, x(m.paceStart), y(0), x(paceEnd), y(m.target * ((paceEnd - m.paceStart) / (m.paceEnd - m.paceStart))));
-    refs.proj.style.display = refs.projLbl.style.display = m.projEnd ? '' : 'none';
-    if (m.projEnd) {
-      // Projection assumes 100% productive from now; clipped where it leaves the axis
-      const endT = Math.min(m.projEnd, axisEnd);
-      const endV = m.done + (endT - m.nowMin);
-      line(refs.proj, x(m.nowMin), y(m.done), x(endT), y(endV));
-      refs.projLbl.setAttribute('x', Math.min(W - R, x(endT) + 6));
-      refs.projLbl.setAttribute('y', y(endV) - 8);
-      refs.projLbl.textContent = `done ${fmtClock(new Date(2000, 0, 1, 0, m.projEnd))}`;
-    }
-    setFades(c);
-  }
-
-  function spawnSmoke(c, p, dx, dy, speed) {
-    const el = document.createElementNS(SVG_NS, 'circle');
-    c.refs.trail.appendChild(el);
-    c.particles.push({ el, x: p.x - dx * 20, y: p.y - dy * 20, vx: -dx * speed + (Math.random() - 0.5) * 0.8, vy: -dy * speed + (Math.random() - 0.5) * 0.8, life: 1, r: 1.5 + Math.random() * 2.5 });
-  }
-
-  function stepSmoke(c) {
-    for (let i = c.particles.length - 1; i >= 0; i--) {
-      const p = c.particles[i];
-      p.life -= 0.028;
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.life <= 0) {
-        p.el.remove();
-        c.particles.splice(i, 1);
-        continue;
-      }
-      p.el.setAttribute('cx', p.x.toFixed(1));
-      p.el.setAttribute('cy', p.y.toFixed(1));
-      p.el.setAttribute('r', (p.r * (0.4 + p.life * 0.8)).toFixed(1));
-      p.el.setAttribute('fill', p.life > 0.55 ? '#ffb347' : '#aab2c5');
-      p.el.setAttribute('opacity', (p.life * 0.9).toFixed(2));
-    }
-  }
-
-  // One animation frame: rocket position along the line, reveal of the line behind it, flame and smoke
-  function frameChart(c, ts) {
-    // Hidden (compact layout off) or not laid out yet: nothing to move
-    if (!c.model || !c.geo || !c.svg.getClientRects().length) return;
-    const { refs, geo } = c;
-    const calm = reduceMotion.matches;
-    let p = 1;
-    if (c.flying) {
-      c.t0 ??= ts;
-      p = Math.min(1, (ts - c.t0) / FLIGHT_MS);
-    }
-    const len = easeInOut(p) * c.total;
-    const pt = refs.line.getPointAtLength(len);
-    const before = refs.line.getPointAtLength(Math.max(0, len - 10));
-    const after = refs.line.getPointAtLength(Math.min(c.total, len + 10));
-    c.angle += ((Math.atan2(after.y - before.y, after.x - before.x) * 180) / Math.PI - c.angle) * 0.2;
-    const bob = c.flying || calm ? 0 : Math.sin(ts / 420) * 1.6;
-    refs.rocket.setAttribute('transform', `translate(${pt.x.toFixed(1)},${(pt.y + bob).toFixed(1)}) rotate(${c.angle.toFixed(1)})`);
-    refs.flame.setAttribute('transform', `scale(${(c.flying ? 1.1 : 0.7) + (calm ? 0 : Math.sin(ts / 45) * 0.25)},1)`);
-    refs.reveal.setAttribute('width', Math.max(0, pt.x));
-    refs.line.style.strokeDashoffset = c.total - len;
-
-    const value = Math.max(0, ((geo.H - geo.B - pt.y) / (geo.H - geo.B - geo.T)) * geo.yMax);
-    refs.tag.textContent = fmt(value);
-    refs.tag.setAttribute('x', Math.min(geo.W - 34, Math.max(34, pt.x)));
-    refs.tag.setAttribute('y', Math.max(12, pt.y - 22));
-
-    if (!calm) {
-      const dx = Math.cos((c.angle * Math.PI) / 180), dy = Math.sin((c.angle * Math.PI) / 180);
-      if (c.flying) {
-        spawnSmoke(c, pt, dx, dy, 1.6);
-        spawnSmoke(c, pt, dx, dy, 2.2);
-      } else if (++c.frame % 5 === 0) {
-        spawnSmoke(c, pt, dx, dy, 0.8);
-      }
-      stepSmoke(c);
-    }
-    if (c.flying && p >= 1) {
-      c.flying = false;
-      setFades(c);
-    }
-  }
-
-  function renderChart() {
-    const card = document.querySelector('.dt-card--productivity-chart');
-    if (!card) return;
-    const model = chartModel(card);
-    let box = card.querySelector('.dtr-chart');
-    if (!model) {
-      card.removeAttribute('data-dtr-chart');
-      box?.remove();
-      return;
-    }
-    injectStyles();
-    if (!box) {
-      box = document.createElement('div');
-      box.className = 'dtr dtr-chart';
-      const original = card.querySelector('.table-responsive');
-      if (original) original.after(box);
-      else card.appendChild(box);
-    }
-    card.setAttribute('data-dtr-chart', '');
-    if (chart?.box !== box) chart = createChart(box);
-    // The rocket flies again whenever the page or day changes, not when the numbers refresh
-    if (chart.key !== location.pathname) {
-      chart.key = location.pathname;
-      chart.flying = !reduceMotion.matches;
-      chart.t0 = null;
-    }
-    const sig = JSON.stringify([model.start, model.span, model.pts.length, model.done.toFixed(1), model.target, model.paceStart, model.paceEnd, model.nowMin, model.projEnd]);
-    if (chart.sig !== sig) {
-      chart.sig = sig;
-      chart.model = model;
-      layoutChart(chart);
-    }
-    setFades(chart);
-  }
-
   function update() {
     arrangeCards();
-    renderChart();
     const productive = readCardMinutes('Productive time');
     const range = readRange();
     const card = findEffectivenessCard();
@@ -893,13 +613,10 @@
   window.addEventListener('scroll', closeMenu, true);
 
   let timer = null;
-  new MutationObserver((records) => {
-    // The rocket animation mutates its own SVG every frame; that must not keep postponing the update
-    const own = n => (n.nodeType === 1 ? n : n.parentElement)?.closest('.dtr-chart');
-    if (records.every(r => own(r.target))) return;
+  new MutationObserver(() => {
     clearTimeout(timer);
     timer = setTimeout(update, 300);
-  }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['height'] });
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
   setInterval(update, 30000);
   update();
 })();
