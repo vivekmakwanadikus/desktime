@@ -8,7 +8,7 @@ const SCRIPTS = [
   { id: 'content', file: 'content.js', runAt: 'document_idle' },
 ];
 // Dev switch: true loads the bundled files from this folder instead of GitHub (reload the extension to pick up edits)
-const LOCAL = true;
+const LOCAL = false;
 const TITLE = 'DeskTime Remaining Time';
 const CHECK_ALARM = 'update-check';
 const CHECK_MINUTES = 5;
