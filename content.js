@@ -404,7 +404,7 @@
       --dtr-muted:oklch(50% 0.018 258); --dtr-track:oklch(93.6% 0.011 252); --dtr-line:oklch(94% 0.008 252);
       --dtr-ink:oklch(21% 0.028 262); --dtr-neg:oklch(53% 0.19 25);
       position:relative; z-index:1; padding:4px 24px 8px; font-family:inherit; }
-    .dtr-big { font-family:var(--dtr-font-display); font-size:36px; font-weight:600; line-height:1.1; letter-spacing:-.03em;
+    .dtr-big { font-family:var(--dtr-font-display); font-size:32px; font-weight:600; line-height:1.1; letter-spacing:-.03em;
       color:var(--dtr-ink); font-variant-numeric:tabular-nums; }
     .dtr-big.over { color:var(--dtr-ok-text); }
     .dtr-small { font-size:13px; color:var(--dtr-muted); line-height:1.5; }
@@ -421,6 +421,18 @@
     .dtr-value.pos { color:var(--dtr-ok-text); }
     .dtr-value.neg { color:var(--dtr-neg); }
     .dtr-note { font-weight:400; color:var(--dtr-muted); }
+    [data-dtr-grid] { display:grid !important; grid-template-columns:minmax(0,1fr); gap:16px; margin:0 0 16px !important; }
+    [data-dtr-grid] > .col { width:auto; max-width:none; padding:0 !important; margin:0 !important; }
+    [data-dtr-grid] > [data-dtr-col="hide"] { display:none !important; }
+    [data-dtr-grid] .dt-card--chart .card-footer, [data-dtr-grid] .dt-card--chart [class*="icon-circle-question"] { display:none !important; }
+    @media (min-width:1100px) {
+      [data-dtr-page] { display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,4fr); gap:16px; }
+      [data-dtr-page] > * { grid-column:1 / -1; }
+      [data-dtr-page] > .alert { order:-2; }
+      [data-dtr-page] > [data-dtr-grid] { display:contents !important; }
+      [data-dtr-page] > [data-dtr-grid] > [data-dtr-col="hero"] { grid-column:1; order:-1; }
+      [data-dtr-page] > .dt-card--productivity-chart { grid-column:2; order:-1; margin:0 !important; }
+    }
     .dtr-menu { --m-bg:oklch(99.4% 0.003 250); --m-border:oklch(90% 0.009 252); --m-text:oklch(21% 0.028 262);
       --m-muted:oklch(50% 0.018 258); --m-hover:oklch(97.2% 0.01 254); --m-accent:oklch(52% 0.19 258);
       --m-focus:oklch(52% 0.19 258); --m-shadow:0 8px 24px oklch(21% 0.028 262 / .16);
@@ -490,7 +502,34 @@
     if (box.innerHTML !== html) box.innerHTML = html;
   }
 
+  // Summary cards dropped: the hero card already carries what matters (they stay in the DOM, readCardMinutes needs them)
+  const HIDDEN_CARDS = new Set(['Arrival time', 'Left time', 'Productive time', 'Desktime time', 'Time at work', 'Projects time', 'Productivity']);
+
+  // Tag the card grid so CSS can lay it out: hero card beside the productivity bar, other summary cards hidden
+  function arrangeCards() {
+    let grid = null;
+    for (const card of document.querySelectorAll('.dt-card--chart')) {
+      const col = card.parentElement;
+      if (!col?.classList.contains('col')) continue;
+      const title = card.querySelector('.dt-typography-h6')?.textContent.trim();
+      const role = card.hasAttribute('data-dtr-card') ? 'hero' : HIDDEN_CARDS.has(title) ? 'hide' : null;
+      if (!role) continue;
+      grid = col.parentElement;
+      if (col.getAttribute('data-dtr-col') !== role) col.setAttribute('data-dtr-col', role);
+    }
+    if (!grid) return;
+    injectStyles();
+    grid.setAttribute('data-dtr-grid', '');
+    // Chart card is a sibling of the grid; narrower now, so charts need a resize to redraw
+    const page = grid.parentElement;
+    if (page.querySelector(':scope > .dt-card--productivity-chart') && !page.hasAttribute('data-dtr-page')) {
+      page.setAttribute('data-dtr-page', '');
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    }
+  }
+
   function update() {
+    arrangeCards();
     const productive = readCardMinutes('Productive time');
     const range = readRange();
     const card = findEffectivenessCard();

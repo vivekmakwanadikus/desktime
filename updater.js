@@ -7,6 +7,8 @@ const SCRIPTS = [
   { id: 'dark', file: 'dark.js', runAt: 'document_start' },
   { id: 'content', file: 'content.js', runAt: 'document_idle' },
 ];
+// Dev switch: true loads the bundled files from this folder instead of GitHub (reload the extension to pick up edits)
+const LOCAL = true;
 const TITLE = 'DeskTime Remaining Time';
 const CHECK_ALARM = 'update-check';
 const CHECK_MINUTES = 5;
@@ -77,7 +79,8 @@ async function sync() {
   for (const { id, file, runAt } of SCRIPTS) {
     const current = registered.find(s => s.id === id);
     // Bundled copy covers first run while GitHub is unreachable
-    const source = await fetchText(REMOTE + file) ?? (current ? null : await fetchText(chrome.runtime.getURL(file)));
+    const bundled = () => fetchText(chrome.runtime.getURL(file));
+    const source = LOCAL ? await bundled() : await fetchText(REMOTE + file) ?? (current ? null : await bundled());
     if (!source) continue;
     const code = wrap(source);
     if (current?.js[0].code === code) continue;
