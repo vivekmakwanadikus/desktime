@@ -37,7 +37,7 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 // Every synced setting with its default; also the set of keys covered by export/import
-const SETTINGS = { dailyTarget: '8:30', endOfDay: '18:30', startOfDay: '', workDays: [1, 2, 3, 4, 5], dayTargets: {}, holidays: [], halfDays: [], darkMode: false };
+const SETTINGS = { dailyTarget: '8:30', endOfDay: '18:30', startOfDay: '', workDays: [1, 2, 3, 4, 5], dayTargets: {}, holidays: [], halfDays: [], darkMode: false, compactLayout: true };
 
 // Days off older than this (YYYY-MM-DD, one year back) are offered for removal
 const PRUNE_BEFORE = (() => {
@@ -74,6 +74,10 @@ chrome.storage.sync.get(SETTINGS, (data) => {
 const darkBox = document.getElementById('dark');
 chrome.storage.sync.get({ darkMode: false }, (data) => { darkBox.checked = data.darkMode; });
 darkBox.addEventListener('change', () => chrome.storage.sync.set({ darkMode: darkBox.checked }));
+
+const compactBox = document.getElementById('compact');
+chrome.storage.sync.get({ compactLayout: true }, (data) => { compactBox.checked = data.compactLayout; });
+compactBox.addEventListener('change', () => chrome.storage.sync.set({ compactLayout: compactBox.checked }));
 
 function renderList() {
   list.innerHTML = '';
@@ -174,6 +178,7 @@ function sanitize(raw) {
     holidays: dates,
     halfDays: dates,
     darkMode: v => typeof v === 'boolean',
+    compactLayout: v => typeof v === 'boolean',
   };
   const out = {};
   for (const [key, ok] of Object.entries(checks)) if (key in raw && ok(raw[key])) out[key] = raw[key];

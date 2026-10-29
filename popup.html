@@ -228,7 +228,7 @@
     #backupStatus { min-height: 1lh; margin: 0; padding: 0 var(--space-4) var(--space-4); }
     #backupStatus.err { color: var(--ita-danger); }
 
-    .foot { display: flex; align-items: center; padding: var(--space-3) var(--space-4); background: var(--ita-surface); border-top: 1px solid var(--ita-border); }
+    .foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--ita-surface); border-top: 1px solid var(--ita-border); }
     .switch { position: relative; display: inline-flex; align-items: center; gap: var(--space-3); font-size: var(--text-md); color: var(--ita-text-2); border-radius: var(--ita-radius-sm); cursor: pointer; }
     .switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
     .track {
@@ -322,7 +322,8 @@
   </main>
 
   <footer class="foot">
-    <label class="switch"><input id="dark" type="checkbox" role="switch"><span class="track"></span>Dark theme on DeskTime</label>
+    <label class="switch"><input id="dark" type="checkbox" role="switch"><span class="track"></span>Dark theme</label>
+    <label class="switch"><input id="compact" type="checkbox" role="switch"><span class="track"></span>Compact layout</label>
   </footer>
 
   <script src="popup.js"></script>

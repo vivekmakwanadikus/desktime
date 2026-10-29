@@ -6,7 +6,7 @@
   const DATE = `${DAY}, ([A-Za-z]+) (\\d{1,2}), (\\d{4})`;
   const RANGE_RE = new RegExp(`${DATE}(?:\\s*-\\s*${DATE})?`);
 
-  const DEFAULTS = { dailyTarget: '8:30', endOfDay: '18:30', startOfDay: '', workDays: [1, 2, 3, 4, 5], dayTargets: {}, holidays: [], halfDays: [] };
+  const DEFAULTS = { dailyTarget: '8:30', endOfDay: '18:30', startOfDay: '', workDays: [1, 2, 3, 4, 5], dayTargets: {}, holidays: [], halfDays: [], compactLayout: true };
   // Weekly early-leave reserve; month surplus beyond it becomes late-arrival allowance
   const EARLY_LEAVE_WEEKLY_MIN = 90;
 
@@ -32,7 +32,18 @@
     }
     if ('holidays' in data) customHolidays = data.holidays || [];
     if ('halfDays' in data) customHalfDays = data.halfDays || [];
+    if ('compactLayout' in data) setCompact(data.compactLayout !== false);
   }
+
+  // Layout rules hang off html.dtr-compact; charts sized for the old layout need a resize to redraw
+  function setCompact(on) {
+    const root = document.documentElement;
+    if (root.classList.contains('dtr-compact') === on) return;
+    root.classList.toggle('dtr-compact', on);
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+  }
+  // On before settings load, so the default layout does not flash the old one
+  document.documentElement.classList.add('dtr-compact');
 
   chrome.storage.sync.get(DEFAULTS, (data) => {
     applySettings(data);
@@ -421,17 +432,19 @@
     .dtr-value.pos { color:var(--dtr-ok-text); }
     .dtr-value.neg { color:var(--dtr-neg); }
     .dtr-note { font-weight:400; color:var(--dtr-muted); }
-    [data-dtr-grid] { display:grid !important; grid-template-columns:minmax(0,1fr); gap:16px; margin:0 0 16px !important; }
-    [data-dtr-grid] > .col { width:auto; max-width:none; padding:0 !important; margin:0 !important; }
-    [data-dtr-grid] > [data-dtr-col="hide"] { display:none !important; }
-    [data-dtr-grid] .dt-card--chart .card-footer, [data-dtr-grid] .dt-card--chart [class*="icon-circle-question"] { display:none !important; }
+    html.dtr-compact [data-dtr-grid] { display:grid !important; grid-template-columns:minmax(0,1fr); gap:16px; margin:0 0 16px !important; }
+    html.dtr-compact [data-dtr-grid] > .col { width:auto; max-width:none; padding:0 !important; margin:0 !important; }
+    html.dtr-compact [data-dtr-grid] > [data-dtr-col="hide"] { display:none !important; }
+    html.dtr-compact [data-dtr-grid] .dt-card--chart .card-footer,
+    html.dtr-compact [data-dtr-grid] .dt-card--chart [class*="icon-circle-question"] { display:none !important; }
+    html.dtr-compact .dt-card--projects-chart { display:none !important; }
     @media (min-width:1100px) {
-      [data-dtr-page] { display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,4fr); gap:16px; }
-      [data-dtr-page] > * { grid-column:1 / -1; }
-      [data-dtr-page] > .alert { order:-2; }
-      [data-dtr-page] > [data-dtr-grid] { display:contents !important; }
-      [data-dtr-page] > [data-dtr-grid] > [data-dtr-col="hero"] { grid-column:1; order:-1; }
-      [data-dtr-page] > .dt-card--productivity-chart { grid-column:2; order:-1; margin:0 !important; }
+      html.dtr-compact [data-dtr-page] { display:grid; grid-template-columns:minmax(260px,1fr) minmax(0,4fr); gap:16px; }
+      html.dtr-compact [data-dtr-page] > * { grid-column:1 / -1; }
+      html.dtr-compact [data-dtr-page] > .alert { order:-2; }
+      html.dtr-compact [data-dtr-page] > [data-dtr-grid] { display:contents !important; }
+      html.dtr-compact [data-dtr-page] > [data-dtr-grid] > [data-dtr-col="hero"] { grid-column:1; order:-1; }
+      html.dtr-compact [data-dtr-page] > .dt-card--productivity-chart { grid-column:2; order:-1; margin:0 !important; }
     }
     .dtr-menu { --m-bg:oklch(99.4% 0.003 250); --m-border:oklch(90% 0.009 252); --m-text:oklch(21% 0.028 262);
       --m-muted:oklch(50% 0.018 258); --m-hover:oklch(97.2% 0.01 254); --m-accent:oklch(52% 0.19 258);
