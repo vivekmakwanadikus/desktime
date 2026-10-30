@@ -46,17 +46,17 @@
 
   chrome.storage.sync.get(DEFAULTS, (data) => {
     applySettings(data);
-    update();
+    scheduleUpdate();
   });
   chrome.storage.local.get({ lateSnapshot: null }, (data) => {
     lateSnapshot = data.lateSnapshot;
-    update();
+    scheduleUpdate();
   });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local') {
       if (changes.lateSnapshot) {
         lateSnapshot = changes.lateSnapshot.newValue ?? null;
-        update();
+        scheduleUpdate();
       }
       return;
     }
@@ -64,7 +64,7 @@
     for (const key of Object.keys(DEFAULTS)) if (changes[key]) data[key] = changes[key].newValue ?? DEFAULTS[key];
     if (Object.keys(data).length) {
       applySettings(data);
-      update();
+      scheduleUpdate();
     }
   });
 
@@ -137,10 +137,16 @@
   }
 
   // Main duration value of a DeskTime card, e.g. 'Productive time' or 'Time at work'
+  const durationCards = new Map();
   function readCardMinutes(cardTitle) {
-    for (const card of document.querySelectorAll('.dt-card')) {
-      const title = card.querySelector('.dt-typography-h6');
-      if (!title || title.textContent.trim() !== cardTitle) continue;
+    let card = durationCards.get(cardTitle);
+    if (!card?.isConnected || card.querySelector('.dt-typography-h6')?.textContent.trim() !== cardTitle) {
+      durationCards.delete(cardTitle);
+      card = [...document.querySelectorAll('.dt-card')].find(el =>
+        el.querySelector('.dt-typography-h6')?.textContent.trim() === cardTitle);
+      if (card) durationCards.set(cardTitle, card);
+    }
+    if (card) {
       const body = card.querySelector('.card-body');
       const valueEl = body?.querySelector('h1, h2, h3') || body;
       const m = valueEl?.textContent.replace(/\s+/g, '').match(/(?:(\d+)h)?(\d+)m|(\d+)h/);
@@ -529,7 +535,7 @@
       if (col.getAttribute('data-dtr-col') !== role) col.setAttribute('data-dtr-col', role);
     }
     if (!grid) return;
-    grid.setAttribute('data-dtr-grid', '');
+    if (!grid.hasAttribute('data-dtr-grid')) grid.setAttribute('data-dtr-grid', '');
     // Chart card is a sibling of the grid; narrower now, so charts need a resize to redraw
     const page = grid.parentElement;
     if (page.querySelector(':scope > .dt-card--productivity-chart') && !page.hasAttribute('data-dtr-page')) {
@@ -548,8 +554,8 @@
       console.debug('[DeskTime Remaining]', { productive, range, card: !!card });
       return;
     }
-    const atWork = readCardMinutes('Time at work');
-    render(card, range.isRange ? buildPeriod(productive, range) : buildDay(productive, atWork, range.start));
+    render(card, range.isRange ? buildPeriod(productive, range)
+      : buildDay(productive, readCardMinutes('Time at work'), range.start));
   }
 
   // Right-click a calendar day: mark as holiday / half day / clear
@@ -611,10 +617,37 @@
   window.addEventListener('scroll', closeMenu, true);
 
   let timer = null;
-  new MutationObserver(() => {
-    clearTimeout(timer);
-    timer = setTimeout(update, 300);
-  }).observe(document.body, { childList: true, subtree: true, characterData: true });
-  setInterval(update, 30000);
-  update();
+  const observer = new MutationObserver(() => scheduleUpdate());
+  const observerOptions = { childList: true, subtree: true, characterData: true };
+
+  // Keep one pending pass: a busy page must not postpone updates indefinitely.
+  function scheduleUpdate() {
+    if (document.hidden || timer !== null) return;
+    timer = setTimeout(runUpdate, 300);
+  }
+
+  function runUpdate() {
+    if (timer !== null) clearTimeout(timer);
+    timer = null;
+    if (document.hidden) return;
+    // Rendering changes titles and card contents. Those writes must not schedule another scan.
+    observer.disconnect();
+    try {
+      update();
+    } finally {
+      observer.observe(document.body, observerOptions);
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (timer !== null) clearTimeout(timer);
+      timer = null;
+    } else {
+      runUpdate();
+    }
+  });
+  setInterval(scheduleUpdate, 30000);
+  observer.observe(document.body, observerOptions);
+  runUpdate();
 })();
