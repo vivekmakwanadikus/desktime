@@ -141,22 +141,7 @@
     html.dtr-skin .dt-card--apps .header-productive { color:var(--sk-ok-text) !important; }
     html.dtr-skin .dt-card--apps .header-unproductive { color:var(--sk-danger) !important; }
     html.dtr-skin .dt-card--apps .header-neutral { color:var(--sk-muted) !important; }
-    /* Neon productivity bar: dark card, glowing green bars (.dtr-nb, tagged by content.js), glowing timeline and NOW marker.
-       .dtr-neon-play is added once per card by content.js to run the intro: bars fade in without changing chart geometry */
-    html.dtr-skin .dt-card.dt-card--productivity-chart { background-color:#070b16 !important; color:#e6ecf5;
-      box-shadow:inset 0 0 0 1px #00ffff33, 0 0 40px #00ffff14, inset 0 0 30px #00ffff12 !important; }
-    html.dtr-skin .dt-card--productivity-chart .dt-typography-h6 { color:#e6ecf5 !important; }
-    html.dtr-skin .dt-card--productivity-chart .nvd3 text, html.dtr-skin .dt-card--productivity-chart .x-axis .tick { fill:#3aa6dd; color:#3aa6dd; }
-    html.dtr-skin .dt-card--productivity-chart .nvd3 .nv-axis line, html.dtr-skin .dt-card--productivity-chart .nvd3 .nv-axis path { stroke:#00ffff1f; }
-    html.dtr-skin .dt-card--productivity-chart .dtr-nb { fill:url(#dtr-neon) #00ffa3 !important; filter:drop-shadow(0 0 3px #00ffa3b3); }
-    html.dtr-skin .dt-card--productivity-chart .interval.online { background-color:#19a8ff !important; border-radius:7px; box-shadow:0 0 10px #19a8ffaa; }
-    html.dtr-skin .dt-card--productivity-chart .interval.now { background-color:#ff2fd6 !important; box-shadow:0 0 10px #ff2fd6;
-      animation:dtr-blink 1.2s ease-in-out infinite; }
-    html.dtr-skin .dtr-neon-play .dtr-nb { animation:dtr-bar-fade .22s ease-out both; }
-    @keyframes dtr-bar-fade { from { opacity:.4; } to { opacity:1; } }
-    @keyframes dtr-blink { 50% { opacity:.3; } }
     @media (prefers-reduced-motion:reduce) {
-      html.dtr-skin .dtr-neon-play .dtr-nb, html.dtr-skin .dtr-neon-play .intervals, html.dtr-skin .interval.now { animation:none !important; }
       html.dtr-skin .btn, html.dtr-skin #ai-summary-trigger-button, html.dtr-skin .dt-card--chart [class*="icon-circle-question"] { transition:none !important; }
       html.dtr-skin .btn:hover, html.dtr-skin #ai-summary-trigger-button:hover { transform:none; }
     }`;
